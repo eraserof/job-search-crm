@@ -9,6 +9,7 @@ Conventions:
 - Every task ends with the tests appropriate to its layer (unit, property, repository, ArchUnit) per `.kiro/steering/development-guidelines.md`.
 - No task is complete until it passes `./gradlew check`.
 - Prefer vertical slices where practical: touch domain → persistence → application → CLI in the same task rather than building layers horizontally.
+- When a task is completed, mark its checkbox `[x]` and append the merged PR link to the task line (e.g., `— [PR #7](...)`). This gives us a bidirectional trail between the plan and the code.
 
 Design references throughout point to:
 
@@ -24,7 +25,7 @@ Design references throughout point to:
 
 ### Phase 1: Bootstrap and Scaffolding
 
-- [ ] 1. Set up Gradle project and base scaffolding
+- [x] 1. Set up Gradle project and base scaffolding — **[PR #1](https://github.com/eraserof/job-search-crm/pull/1)** (merged)
   - Initialise Gradle 8.x (Kotlin DSL) with Java 25 toolchain and Spring Boot 3.3.x
   - Add dependencies from `development-guidelines.md` (Spring Boot, Picocli + Spring starter, sqlite-jdbc, Flyway, Jackson, Google APIs, SLF4J/Logback)
   - Add test dependencies (JUnit 5, AssertJ, jqwik, Mockito, ArchUnit)
@@ -34,7 +35,7 @@ Design references throughout point to:
   - Add a smoke test that boots the Spring context without loading external services
   - _Design refs: development-guidelines.md, design.md § Package / Module Map_
 
-- [ ] 2. Establish ArchUnit rules from day one
+- [x] 2. Establish ArchUnit rules from day one — **[PR #2](https://github.com/eraserof/job-search-crm/pull/2)** (merged)
   - Enforce: `domain` has no imports outside `domain` (no Spring, Flyway, JDBC, Jackson)
   - Enforce: `interfaces.cli` never imports `domain` or `infrastructure` directly
   - Enforce: `infrastructure.persistence` classes implement interfaces from `domain`
@@ -47,7 +48,7 @@ Design references throughout point to:
 
 ### Phase 2: Domain Foundation
 
-- [ ] 3. Implement value objects and enums
+- [x] 3. Implement value objects and enums — **[PR #3](https://github.com/eraserof/job-search-crm/pull/3)** (merged)
   - Create strongly-typed IDs as records: `OpportunityId`, `ContactId`, `CompanyId`, `InteractionId`, `EventId`, `TaskId`, `DraftMessageId`, `DocumentId`, `AgentRunId`
   - Implement `EmailAddress` with RFC-5321-ish validation, canonical lower-case, `domain()` accessor
   - Implement enums: `Stage`, `Channel`, `Direction`, `ContactRole`, `TaskType`, `TaskStatus`, `EventKind`, `DraftStatus`, `DocumentKind`, `AgentRunStatus`, `AgentName`
@@ -56,7 +57,7 @@ Design references throughout point to:
   - Unit tests: 100% branch coverage on `Stage.canTransitionTo` and `EmailAddress` validation
   - _Design refs: domain-model.md § Value Objects, § Stage Transition Matrix_
 
-- [ ] 4. Implement core aggregates with in-memory persistence stubs
+- [x] 4. Implement core aggregates with in-memory persistence stubs — **[PR #4](https://github.com/eraserof/job-search-crm/pull/4)** (includes a follow-up refactor commit splitting `core.domain` into per-aggregate sub-packages: `company/`, `contact/`, `opportunity/`, `interaction/`, `event/`, `task/`, `document/`, `shared/`)
   - Implement `Company`, `Contact`, `Opportunity` aggregates with invariants enforced in mutators
   - Implement child entities: `Interaction`, `Event`, `Task`, `Document`
   - Implement `DraftMessage` aggregate with its state-machine transitions
