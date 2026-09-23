@@ -181,15 +181,17 @@ class ArchitectureRulesTest {
                   + "corresponding domain repository interface (ports & adapters)");
 
   private static ArchCondition<JavaClass> implementADomainRepositoryInterface() {
-    return new ArchCondition<>("implement a *.domain.*Repository interface") {
+    return new ArchCondition<>("implement a *.domain(.*)?.*Repository interface") {
       @Override
       public void check(JavaClass item, ConditionEvents events) {
         boolean implementsDomainRepo =
             item.getAllRawInterfaces().stream()
                 .anyMatch(
-                    iface ->
-                        iface.getPackageName().endsWith(".domain")
-                            && iface.getSimpleName().endsWith("Repository"));
+                    iface -> {
+                      String pkg = iface.getPackageName();
+                      boolean inDomain = pkg.endsWith(".domain") || pkg.contains(".domain.");
+                      return inDomain && iface.getSimpleName().endsWith("Repository");
+                    });
         if (!implementsDomainRepo) {
           events.add(
               SimpleConditionEvent.violated(
