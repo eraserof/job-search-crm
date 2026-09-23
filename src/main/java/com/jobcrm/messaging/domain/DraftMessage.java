@@ -1,9 +1,9 @@
 package com.jobcrm.messaging.domain;
 
-import com.jobcrm.core.domain.Channel;
-import com.jobcrm.core.domain.ContactId;
-import com.jobcrm.core.domain.DraftMessageId;
-import com.jobcrm.core.domain.OpportunityId;
+import com.jobcrm.core.domain.contact.ContactId;
+import com.jobcrm.core.domain.interaction.Channel;
+import com.jobcrm.core.domain.opportunity.OpportunityId;
+import com.jobcrm.core.domain.shared.DraftMessageId;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;

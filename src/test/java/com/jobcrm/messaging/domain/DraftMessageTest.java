@@ -3,9 +3,9 @@ package com.jobcrm.messaging.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.jobcrm.core.domain.Channel;
-import com.jobcrm.core.domain.ContactId;
-import com.jobcrm.core.domain.OpportunityId;
+import com.jobcrm.core.domain.contact.ContactId;
+import com.jobcrm.core.domain.interaction.Channel;
+import com.jobcrm.core.domain.opportunity.OpportunityId;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 

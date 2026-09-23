@@ -1,7 +1,7 @@
 package com.jobcrm.messaging.domain;
 
-import com.jobcrm.core.domain.DraftMessageId;
-import com.jobcrm.core.domain.OpportunityId;
+import com.jobcrm.core.domain.opportunity.OpportunityId;
+import com.jobcrm.core.domain.shared.DraftMessageId;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;

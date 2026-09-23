@@ -3,6 +3,13 @@ package com.jobcrm.core.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.jobcrm.core.domain.company.CompanyId;
+import com.jobcrm.core.domain.contact.ContactId;
+import com.jobcrm.core.domain.document.DocumentId;
+import com.jobcrm.core.domain.event.EventId;
+import com.jobcrm.core.domain.interaction.InteractionId;
+import com.jobcrm.core.domain.opportunity.OpportunityId;
+import com.jobcrm.core.domain.task.TaskId;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -14,8 +21,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Uniform contract tests for the strongly-typed identifier records. Each ID must reject a null
- * {@link UUID}, and each {@code newId()} factory must produce a distinct value.
+ * Uniform contract tests for the strongly-typed identifier records across all subpackages. Each ID
+ * must reject a null {@link UUID}, and each {@code newId()} factory must produce a distinct value.
  */
 class IdentifierValueObjectsTest {
 
