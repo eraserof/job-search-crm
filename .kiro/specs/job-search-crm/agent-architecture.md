@@ -531,7 +531,7 @@ Fast, deterministic. Use these for control-flow coverage:
 
 ### Recorded fixtures — integration tests
 
-Deterministic replay of real LLM behavior. Fixture layout:
+Deterministic replay of real LLM behavior. **Committed fixtures use synthetic data only** — never commit a fixture recorded against a real inbox without sanitising personal names, company names, and email bodies. `*.private.json` is gitignored to catch accidents. Fixture layout:
 
 ```
 src/test/resources/fixtures/agents/

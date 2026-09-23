@@ -14,6 +14,10 @@ build/
 hs_err_pid*
 replay_pid*
 
+# But the Gradle wrapper jar must be committed so `./gradlew` works
+# on machines without a pre-installed Gradle.
+!gradle/wrapper/gradle-wrapper.jar
+
 # IDEs
 .idea/
 *.iml
@@ -42,6 +46,9 @@ jobcrm.db-*
 # Logs
 logs/
 *.log
+
+# jqwik property-based test seed cache
+.jqwik-database
 
 # Env / secrets — never commit
 .env
