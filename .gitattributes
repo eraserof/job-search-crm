@@ -1,0 +1,14 @@
+# Normalise line endings across platforms.
+* text=auto eol=lf
+
+# Windows batch files must be CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Never munge binaries
+*.jar binary
+*.png binary
+*.jpg binary
+*.pdf binary
+*.zip binary
+*.db binary
