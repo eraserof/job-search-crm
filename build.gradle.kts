@@ -45,9 +45,9 @@ dependencies {
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform {
-        includeEngines("junit-jupiter", "jqwik")
-    }
+    // Allow every JUnit Platform engine on the classpath to run: junit-jupiter,
+    // jqwik, and archunit. Filtering to a subset here silently drops the others.
+    useJUnitPlatform()
     testLogging {
         events("failed", "skipped")
         showExceptions = true
