@@ -2,7 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.5.0"
     id("io.spring.dependency-management") version "1.1.6"
-    id("com.diffplug.spotless") version "6.25.0"
+    id("com.diffplug.spotless") version "7.0.4"
 }
 
 group = "com.jobcrm"
@@ -58,7 +58,7 @@ tasks.withType<Test> {
 
 spotless {
     java {
-        googleJavaFormat("1.24.0")
+        googleJavaFormat("1.28.0")
         importOrder()
         removeUnusedImports()
         endWithNewline()
