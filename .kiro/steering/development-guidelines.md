@@ -138,7 +138,10 @@ Because LLMs are non-deterministic and slow, we use **two** test approaches:
 1. **Mockito mocks** for unit-level agent tests. Stub `LlmClient` to return canned `LlmResponse` values. Fast, deterministic, used for verifying agent-loop control flow (tool allow-list enforcement, step cap, error paths, retry-on-invalid-args).
 2. **Recorded fixtures** for integration tests where response shape matters. Real LLM calls are captured once as JSON under `src/test/resources/fixtures/agents/<agentName>/<scenario>.json` and replayed via `RecordedLlmClient`. When prompts change, fixtures are re-recorded intentionally.
 
-Rule: never call a real LLM API from CI. Recording is a manual developer action.
+Rules:
+
+- Never call a real LLM API from CI. Recording is a manual developer action.
+- **Committed fixtures use synthetic data only.** When recording a fixture against real inbox data (real names, real companies, real emails), do not commit it. Sanitise or regenerate against a synthetic dataset before committing. Files matching `*.private.json` are gitignored to catch accidental commits.
 
 ### Repository tests
 
@@ -260,7 +263,7 @@ core          →  (nothing)
 ## Code Style
 
 - Google Java Style, enforced by Spotless in the Gradle build.
-- Line length 120.
+- Line length: whatever `google-java-format` decides (default 100 columns). We accept the tool's opinion rather than fight it.
 - No wildcard imports.
 - No `Optional` fields on records or entities; use nullable-annotated fields or wrap at read time.
 - No `null` returns from methods that could return `Optional<T>`. Use `Optional` at API surfaces, avoid it in performance-critical inner loops.

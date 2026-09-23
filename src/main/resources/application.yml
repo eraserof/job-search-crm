@@ -1,0 +1,19 @@
+# Application defaults. User overrides live in ~/.jobcrm/config.yml
+# and JOBCRM_* environment variables. See development-guidelines.md
+# and ui-cli.md for the full configuration story.
+
+spring:
+  main:
+    banner-mode: "off"
+    web-application-type: none
+  # Disable auto-configurations that make no sense for a CLI app.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+
+logging:
+  level:
+    root: WARN
+    com.jobcrm: INFO
