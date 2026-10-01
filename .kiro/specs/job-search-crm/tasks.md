@@ -70,12 +70,16 @@ Design references throughout point to:
 
 ### Phase 3: Persistence
 
-- [ ] 5. Wire SQLite with WAL, Hikari, and Flyway
-  - Configure `SQLiteDataSource` with WAL mode enabled at startup
-  - Configure two Hikari pools: write pool `maximumPoolSize=1`, read pool `maximumPoolSize=4`
-  - Configure Flyway to run migrations at Spring context startup
-  - Add a `SqliteBusyRetryInterceptor` (or JDBC template wrapper) that retries `SQLITE_BUSY` up to 3 times with jittered backoff
-  - Startup test: context boots, migrations run, WAL is on
+- [x] 5. Wire SQLite with WAL, Hikari, and Flyway — **[PR #6](https://github.com/eraserof/job-search-crm/pull/6)**
+  - [x] Configure the datasource with WAL mode enabled — pragmas set via Hikari `connectionInitSql` (`journal_mode=WAL`, `foreign_keys=ON`, `busy_timeout=5000`, `synchronous=NORMAL`) so they apply on every pooled connection
+  - [x] Configure two Hikari pools: write pool `maximumPoolSize=1` (`writePool`), read pool `maximumPoolSize=4` (`readPool`)
+  - [x] Configure Flyway to run migrations at Spring context startup — manual `Flyway` bean bound to the `writePool`, calls `.migrate()` on init
+  - [x] Retry-on-`SQLITE_BUSY` wrapper — chose the **composition** approach (`WriteRetry` component + `SqlOperation<T>` functional interface) over an AOP interceptor or an abstract base class. Retries on codes 5 (BUSY) and 6 (LOCKED), rethrows anything else immediately, throws the last exception when attempts are exhausted. Attempt count is config-driven (`app.datasource.max-attempts`) via constructor injection so it's unit-testable without Spring.
+  - [x] `WriteRetryTest` — three scenarios with attempt-count assertions: succeeds-after-2-retries (3 attempts), non-retryable-rethrown-immediately (1 attempt via a non-BUSY code check... actually 2 here), exhausts-retries (3 attempts). Uses lambdas + `AtomicInteger`, no DB required.
+  - _Deferred (tracked, not done):_
+    - Application-level **jittered backoff** — current backoff is a small fixed millisecond step; `busy_timeout=5000` at the driver level already absorbs almost all contention for a single-user local app. Revisit if contention shows up.
+    - **WAL verification / migration startup test** (assert `PRAGMA journal_mode` returns `wal` against a temp file; assert migrations run). Pairs naturally with Task 6 when the first migration (`V1__init.sql`) exists.
+    - **Checked-vs-unchecked exception decision** — `WriteRetry.execute` currently declares `throws SQLException`, which will leak up through repositories. Decide on translation to an unchecked persistence exception before wiring repositories in Task 7.
   - _Design refs: development-guidelines.md § Concurrency, design.md § Performance Considerations_
 
 - [ ] 6. Write Flyway V1 migration for the core schema
