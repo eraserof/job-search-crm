@@ -71,22 +71,28 @@ Design references throughout point to:
 ### Phase 3: Persistence
 
 - [x] 5. Wire SQLite with WAL, Hikari, and Flyway — **[PR #6](https://github.com/eraserof/job-search-crm/pull/6)**
-  - [x] Configure the datasource with WAL mode enabled — pragmas set via Hikari `connectionInitSql` (`journal_mode=WAL`, `foreign_keys=ON`, `busy_timeout=5000`, `synchronous=NORMAL`) so they apply on every pooled connection
-  - [x] Configure two Hikari pools: write pool `maximumPoolSize=1` (`writePool`), read pool `maximumPoolSize=4` (`readPool`)
-  - [x] Configure Flyway to run migrations at Spring context startup — manual `Flyway` bean bound to the `writePool`, calls `.migrate()` on init
-  - [x] Retry-on-`SQLITE_BUSY` wrapper — chose the **composition** approach (`WriteRetry` component + `SqlOperation<T>` functional interface) over an AOP interceptor or an abstract base class. Retries on codes 5 (BUSY) and 6 (LOCKED), rethrows anything else immediately, throws the last exception when attempts are exhausted. Attempt count is config-driven (`app.datasource.max-attempts`) via constructor injection so it's unit-testable without Spring.
-  - [x] `WriteRetryTest` — three scenarios with attempt-count assertions: succeeds-after-2-retries (3 attempts), non-retryable-rethrown-immediately (1 attempt via a non-BUSY code check... actually 2 here), exhausts-retries (3 attempts). Uses lambdas + `AtomicInteger`, no DB required.
-  - _Deferred (tracked, not done):_
-    - Application-level **jittered backoff** — current backoff is a small fixed millisecond step; `busy_timeout=5000` at the driver level already absorbs almost all contention for a single-user local app. Revisit if contention shows up.
-    - **WAL verification / migration startup test** (assert `PRAGMA journal_mode` returns `wal` against a temp file; assert migrations run). Pairs naturally with Task 6 when the first migration (`V1__init.sql`) exists.
-    - **Checked-vs-unchecked exception decision** — `WriteRetry.execute` currently declares `throws SQLException`, which will leak up through repositories. Decide on translation to an unchecked persistence exception before wiring repositories in Task 7.
+  - (done) Configure the datasource with WAL mode enabled — pragmas set via Hikari `connectionInitSql` (`journal_mode=WAL`, `foreign_keys=ON`, `busy_timeout=5000`, `synchronous=NORMAL`) so they apply on every pooled connection
+  - (done) Configure two Hikari pools: write pool `maximumPoolSize=1` (`writePool`), read pool `maximumPoolSize=4` (`readPool`)
+  - (done) Configure Flyway to run migrations at Spring context startup — manual `Flyway` bean bound to the `writePool`, calls `.migrate()` on init
+  - (done) Retry-on-`SQLITE_BUSY` wrapper — chose the **composition** approach (`WriteRetry` component + `SqlOperation<T>` functional interface) over an AOP interceptor or an abstract base class. Retries on codes 5 (BUSY) and 6 (LOCKED), rethrows anything else immediately, throws the last exception when attempts are exhausted. Attempt count is config-driven (`app.datasource.max-attempts`) via constructor injection so it's unit-testable without Spring.
+  - (done) `WriteRetryTest` — three scenarios with attempt-count assertions: succeeds-after-2-retries (3 attempts), non-retryable-error-rethrown (stops as soon as a non-BUSY/LOCKED code is seen, without exhausting retries), exhausts-retries (3 attempts). Uses lambdas + `AtomicInteger`, no DB required.
+  - _Moved to Task 6:_ WAL / migration startup verification test, and the checked→unchecked exception translation (`PersistenceException`). The decision landed as: log once and throw an unchecked `PersistenceException` wrapping the `SQLException`, so failures still surface to the CLI without forcing `throws` on intermediate layers.
+  - _Deferred (still open, not blocking):_ application-level **jittered backoff** — current backoff is a small fixed millisecond step; `busy_timeout=5000` at the driver level already absorbs almost all contention for a single-user local app. Revisit if contention shows up.
   - _Design refs: development-guidelines.md § Concurrency, design.md § Performance Considerations_
 
-- [ ] 6. Write Flyway V1 migration for the core schema
+- [ ] 6. Write Flyway V1 migration for the core schema (+ items deferred from Task 5)
   - Create `V1__init.sql` with all tables from `domain-model.md` § SQLite Schema (company, contact, contact_email, opportunity, opportunity_contact, interaction, interaction_contact, event, event_participant, task, draft_message, document, gmail_cursor, calendar_cursor)
   - Include all indexes and unique constraints
   - Repository test: apply the migration to a temp SQLite file and verify schema shape via `PRAGMA table_info`
-  - _Design refs: domain-model.md § SQLite Schema, § Migration Strategy_
+  - **Deferred from Task 5 — WAL / migration startup verification test**: against a real temp SQLite file, assert `PRAGMA journal_mode` returns `wal`, `PRAGMA foreign_keys` is on, and that Flyway actually ran `V1__init.sql` (migration history present + expected tables exist). Now implementable because `V1__init.sql` exists.
+  - **Deferred from Task 5 — checked→unchecked exception translation in `WriteRetry`**:
+    - Add an unchecked `PersistenceException extends RuntimeException` (in `infrastructure.persistence`) that wraps the originating `SQLException` as its cause.
+    - When `WriteRetry.execute` gives up (non-retryable error, or retries exhausted), **log once** at the point of translation (SLF4J) and throw `PersistenceException` instead of the raw `SQLException`.
+    - Rationale (confirmed with product intent): write failures must surface so the CLI can decide how to react (retry later, keep a local copy, discard). Unchecked propagation means intermediate layers (repositories, application services, domain) stay free of `throws SQLException` and of any `java.sql` reference — the failure flies straight to the CLI's single top-level handler, which is the deliberate catch point.
+    - Update `SqlOperation` / `execute` so `execute` no longer declares `throws SQLException` (it throws unchecked). The `SqlOperation.run()` seam may still declare `throws SQLException` internally — that's fine, it's caught and translated inside `execute`.
+    - Update `WriteRetryTest` accordingly: assert `execute` throws `PersistenceException` (not `SQLException`) on the non-retryable and exhausted-retries paths, and that the cause is the original `SQLException` with the expected error code. Keep the attempt-count assertions.
+    - Log exactly once per genuine failure (at the translate point) to avoid duplicate log noise as it propagates.
+  - _Design refs: domain-model.md § SQLite Schema, § Migration Strategy; development-guidelines.md § Error Handling, § Logging Conventions_
 
 - [ ] 7. Implement JDBC repositories for core aggregates
   - Implement `JdbcCompanyRepository`, `JdbcContactRepository`, `JdbcOpportunityRepository`, `JdbcInteractionRepository`, `JdbcEventRepository`, `JdbcTaskRepository`, `JdbcDraftMessageRepository`
