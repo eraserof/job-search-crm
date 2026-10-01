@@ -95,8 +95,10 @@ Design references throughout point to:
     - Log exactly once per genuine failure (at the translate point) to avoid duplicate log noise as it propagates.
   - _Design refs: domain-model.md § SQLite Schema, § Migration Strategy; development-guidelines.md § Error Handling, § Logging Conventions_
 
-- [ ] 7. Implement JDBC repositories for core aggregates
+- [x] 7. Implement JDBC repositories for core aggregates — **[PR #9](https://github.com/eraserof/job-search-crm/pull/9)**
   - Implement `JdbcCompanyRepository`, `JdbcContactRepository`, `JdbcOpportunityRepository`, `JdbcInteractionRepository`, `JdbcEventRepository`, `JdbcTaskRepository`, `JdbcDraftMessageRepository`
+  - _Chosen approach:_ raw JDBC + `WriteRetry` (not `JdbcTemplate`) — `JdbcTemplate` translates `SQLException` into Spring's `DataAccessException` before `WriteRetry` could inspect the SQLite error code, so the BUSY/LOCKED retry would never fire. Boilerplate is tamed by a shared `JdbcSupport` helper (`queryOne`/`queryList`/`update`/`inWriteTransaction`) and a `SqlTypes` conversion helper. Reads go through the read pool; writes through the write pool wrapped in `WriteRetry`.
+  - _Schema fix (`V2__company_updated_at.sql`):_ the `Company` aggregate tracks `updatedAt` but V1's `company` table omitted the column (an inconsistency inherited from the design's schema). Added it additively with a default + backfill.
   - Use plain JDBC (no JPA); manual row mapping to keep domain types clean
   - Store UUIDs as TEXT, timestamps as ISO-8601 TEXT
   - `save` must handle both insert and update via upsert (`INSERT ... ON CONFLICT ... DO UPDATE`)
