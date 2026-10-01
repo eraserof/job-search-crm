@@ -80,7 +80,8 @@ Design references throughout point to:
   - _Deferred (still open, not blocking):_ application-level **jittered backoff** — current backoff is a small fixed millisecond step; `busy_timeout=5000` at the driver level already absorbs almost all contention for a single-user local app. Revisit if contention shows up.
   - _Design refs: development-guidelines.md § Concurrency, design.md § Performance Considerations_
 
-- [ ] 6. Write Flyway V1 migration for the core schema (+ items deferred from Task 5)
+- [x] 6. Write Flyway V1 migration for the core schema (+ items deferred from Task 5) — **[PR #8](https://github.com/eraserof/job-search-crm/pull/8)**
+  - _Also fixed a production bug this task surfaced:_ Hikari `connectionInitSql` with a semicolon-joined pragma string only ran the **first** statement under sqlite-jdbc, so `foreign_keys=ON` silently never applied (FK cascades were dead). Switched `DataSourceConfig` to apply pragmas via `SQLiteConfig` data-source properties, which reliably sets all of them per connection. Guarded by `HikariInitSqlProbeTest`.
   - Create `V1__init.sql` with all tables from `domain-model.md` § SQLite Schema (company, contact, contact_email, opportunity, opportunity_contact, interaction, interaction_contact, event, event_participant, task, draft_message, document, gmail_cursor, calendar_cursor)
   - Include all indexes and unique constraints
   - Repository test: apply the migration to a temp SQLite file and verify schema shape via `PRAGMA table_info`
