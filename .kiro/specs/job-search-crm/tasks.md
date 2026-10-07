@@ -110,13 +110,14 @@ Design references throughout point to:
 
 ### Phase 4: Application Services
 
-- [ ] 8. Implement core application services with transactions
+- [x] 8. Implement core application services with transactions — **[PR #10](https://github.com/eraserof/job-search-crm/pull/10)**
   - `OpportunityService`: `create`, `advanceStage` (throws `IllegalStageTransition`), `attachContact`, `recordInteraction`
-  - `ContactService`: `createOrMerge` (dedup by canonical email), `rename`, `addEmail`
+  - `ContactService`: `createOrMerge` (dedup by canonical email), `rename`, `addEmail`, `create`
   - `CompanyService`: `create`, `renameTo`, `setDomain`, `findOrCreateByName`
   - `DraftReviewService`: `listPending`, `approve`, `discard`, `markSent`
-  - Annotate with `@Transactional`; assert single-aggregate-per-transaction where practical
-  - Unit tests with mocked repositories covering error paths (duplicate email, illegal transition, unknown id)
+  - Unit tests (18) with mocked repositories cover the error paths: unknown id (`UnknownAggregate`/`UnknownDraft`), illegal stage transition, invalid draft transition, dedup-by-email, and no-save-on-failure.
+  - _Transaction decision (not `@Transactional`):_ the repositories already own their write transactions via `JdbcSupport.inWriteTransaction` on the write pool. A Spring `@Transactional` on the service would open a separate transaction that doesn't wrap those hand-rolled JDBC transactions, so it would be misleading. Every service method mutates a single aggregate = one `repo.save` = already atomic. The one cross-aggregate op, `recordInteraction`, validates against the aggregate's invariants first (no write on failure), then writes the authoritative `Interaction` before the opportunity's derived view. Cross-aggregate consistency is eventual and self-healing: the opportunity reconstitutes its interaction-id list and `lastInteractionAt` from the interaction table on every load, so a partial failure is repaired on the next read. Outbox/domain-event upgrade path documented in `OpportunityService` for a future multi-user scenario.
+  - Added a `Clock` bean (`app.ClockConfig`) injected into services so "now" is controllable (system UTC in prod, fixed clock in tests).
   - _Design refs: domain-model.md § Key Application-Service Signatures, development-guidelines.md § Error Handling_
 
 ---
