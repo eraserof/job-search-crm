@@ -98,6 +98,28 @@ class CliSmokeTest {
     assertThat(out).contains("status", "ok");
   }
 
+  @Test
+  void configGetReadsBoundValueFromDefaults() {
+    String out = run(0, "config", "get", "llm.provider");
+    assertThat(out.trim()).isEqualTo("anthropic");
+  }
+
+  @Test
+  void configGetListsAllAndMasksSecrets() {
+    String out = run(0, "config", "get");
+    // Non-secret defaults are shown...
+    assertThat(out).contains("llm.provider=anthropic", "llm.default-model=claude-sonnet-4-5");
+    // ...and secret keys are rendered masked/unset, never as a raw value.
+    assertThat(out).contains("llm.api-key=(unset)", "gmail.client-secret=(unset)");
+  }
+
+  @Test
+  void configGetRejectsUnknownKey() {
+    // An unknown key raises a Picocli ParameterException -> usage error exit code 2.
+    // (The message is written to stderr by Picocli's default parameter-exception handler.)
+    run(2, "config", "get", "does.not.exist");
+  }
+
   private static String extractId(String json) {
     int idx = json.indexOf("\"id\"");
     int colon = json.indexOf(':', idx);

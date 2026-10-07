@@ -143,13 +143,15 @@ Design references throughout point to:
 
 ### Phase 6: Configuration, Logging, Scheduling Scaffolding
 
-- [ ] 10. Configuration and logging plumbing
-  - Implement `ConfigLoader` that reads packaged `application.yml`, overlays `~/.jobcrm/config.yml`, and applies `JOBCRM_*` environment overrides
-  - Bind config to Spring `@ConfigurationProperties` records (never mutable POJOs)
-  - Redact secret fields (`llm.api-key`, `gmail.client-secret`, `gmail.refresh-token`) in any logged config dump
-  - Configure Logback with rolling file appender under `~/.jobcrm/logs/`, MDC keys `agentRunId`, `agentName`, `opportunityId`, `interactionId`
-  - Add a `LogContext` helper to push/pop MDC keys safely
-  - Unit tests: env vars override YAML; missing config falls back to defaults; secrets never appear in logged output
+- [x] 10. Configuration and logging plumbing — **[PR #12](https://github.com/eraserof/job-search-crm/pull/12)**
+  - Bind config to Spring `@ConfigurationProperties` records (never mutable POJOs): `JobcrmConfig` with nested `Llm`/`Gmail`/`Calendar`/`Daemon` records, `@DefaultValue` on fields, activated by `@ConfigurationPropertiesScan` on `Main`.
+  - Redact secret fields (`llm.api-key`, `gmail.client-secret`, `gmail.refresh-token`) in any logged config dump via `ConfigRedactor` (fixed mask, never a partial reveal; unset → `(unset)`).
+  - Configure Logback (`logback-spring.xml`) with a console appender (System.err) and a daily rolling file appender under `~/.jobcrm/logs/`, surfacing MDC keys `agentRunId`, `agentName`, `opportunityId`, `interactionId` via `%mdc`.
+  - Add a `LogContext` helper: `AutoCloseable` push/pop of MDC keys, restoring prior values (not just removing) so nested contexts are correct.
+  - Wired `jobcrm config get [<key>]` to the bound config (secrets masked on display); `config set` is deferred (atomic comment-preserving YAML editing of the overlay is its own focused piece of work — users edit `~/.jobcrm/config.yml` or set `JOBCRM_*` env vars for now).
+  - _Approach note (no hand-rolled `ConfigLoader`):_ the overlay + env-override precedence the task asked for is exactly Spring Boot's property-source model, so instead of a bespoke loader we use `spring.config.import: "optional:file:${user.home}/.jobcrm/config.yml"` for the overlay and relaxed binding for `JOBCRM_*` env vars. One fewer moving part, and precedence is the framework's well-tested behavior rather than ours.
+  - _Singleton-command fix:_ `config get`'s optional `<key>` positional leaked across invocations because Picocli command beans are Spring singletons; made the `Get` subcommand `@Scope("prototype")` so each invocation gets a fresh instance.
+  - Unit tests (210 total): `JobcrmConfigTest` proves property override wins over YAML and missing config falls back to defaults; `ConfigRedactorTest` proves secrets never appear verbatim; `LogContextTest` proves MDC set/restore including nested contexts; `CliSmokeTest` exercises `config get` end-to-end (reads defaults, masks secrets, rejects unknown keys).
   - _Design refs: development-guidelines.md § Configuration and Secrets, § Logging Conventions_
 
 - [ ] 11. Scheduling primitives (empty schedule)
