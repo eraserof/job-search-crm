@@ -1,19 +1,45 @@
 # Application defaults. User overrides live in ~/.jobcrm/config.yml
 # and JOBCRM_* environment variables. See development-guidelines.md
 # and ui-cli.md for the full configuration story.
+#
+# Config precedence (lowest to highest):
+#   1. this packaged application.yml
+#   2. ~/.jobcrm/config.yml           (optional overlay, imported below)
+#   3. JOBCRM_* environment variables (relaxed binding, e.g. JOBCRM_LLM_API_KEY)
 
 spring:
   main:
     banner-mode: "off"
     web-application-type: none
+  config:
+    # Optional so the app still boots on a fresh machine with no user config yet.
+    import: "optional:file:${user.home}/.jobcrm/config.yml"
 
 app:
   datasource:
+    # Defaults to the project-local file for now; the ~/.jobcrm/ data dir is
+    # established with the daemon + init work in a later task.
     jdbc-url: jdbc:sqlite:${JOBCRM_DB_PATH:./jobcrm.db}
     driver-class-name: org.sqlite.JDBC
     flyway:
       locations: classpath:db/migration
     max-attempts: 3
+
+# User-facing configuration, bound to JobcrmConfig. Secrets (llm.api-key,
+# gmail.client-secret, gmail.refresh-token) are intentionally left unset here;
+# they come from the user config file or JOBCRM_* env vars.
+jobcrm:
+  llm:
+    provider: anthropic
+    default-model: claude-sonnet-4-5
+  gmail:
+    poll-interval: 5m
+  calendar:
+    poll-interval: 5m
+  daemon:
+    briefing-time: "07:00"
+    stale-sweep-time: "03:00"
+    silence-threshold: 14d
 
 logging:
   level:
