@@ -49,6 +49,13 @@ public final class InMemoryContactRepository implements ContactRepository {
   }
 
   @Override
+  public List<Contact> findAll() {
+    return byId.values().stream()
+        .sorted(java.util.Comparator.comparing(c -> c.displayName().toLowerCase(Locale.ROOT)))
+        .toList();
+  }
+
+  @Override
   public void save(Contact contact) {
     Objects.requireNonNull(contact, "contact");
     // Enforce global email uniqueness.

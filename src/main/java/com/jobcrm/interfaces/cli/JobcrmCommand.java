@@ -13,7 +13,15 @@ import picocli.CommandLine.Command;
     mixinStandardHelpOptions = true,
     version = "jobcrm 0.1.0-SNAPSHOT",
     description = "Agentic job-search CRM. Local-only. See `jobcrm <subcommand> --help`.",
-    subcommands = {})
+    subcommands = {
+      com.jobcrm.interfaces.cli.company.CompanyCommand.class,
+      com.jobcrm.interfaces.cli.contact.ContactCommand.class,
+      com.jobcrm.interfaces.cli.opportunity.OpportunityCommand.class,
+      com.jobcrm.interfaces.cli.setup.InitCommand.class,
+      com.jobcrm.interfaces.cli.setup.ConfigCommand.class,
+      com.jobcrm.interfaces.cli.setup.AuthCommand.class,
+      com.jobcrm.interfaces.cli.StatusCommand.class
+    })
 public class JobcrmCommand implements Runnable {
 
   @Override

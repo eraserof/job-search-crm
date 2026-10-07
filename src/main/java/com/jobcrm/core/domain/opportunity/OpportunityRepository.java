@@ -17,6 +17,9 @@ public interface OpportunityRepository {
 
   List<Opportunity> findByStage(Stage stage);
 
+  /** All opportunities, ordered by creation time. Used by the CLI {@code opp list}. */
+  List<Opportunity> findAll();
+
   /**
    * Simple text search over role and (denormalised) company name. Implementation-defined ranking.
    */

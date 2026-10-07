@@ -49,6 +49,14 @@ public class JdbcCompanyRepository implements CompanyRepository {
   }
 
   @Override
+  public java.util.List<Company> findAll() {
+    return jdbc.queryList(
+        "SELECT id, name, domain, created_at, updated_at FROM company ORDER BY name COLLATE NOCASE",
+        JdbcSupport.noParams(),
+        JdbcCompanyRepository::mapRow);
+  }
+
+  @Override
   public void save(Company company) {
     jdbc.update(
         "INSERT INTO company (id, name, domain, created_at, updated_at) "
