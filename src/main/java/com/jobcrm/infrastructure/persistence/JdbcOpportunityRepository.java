@@ -70,6 +70,12 @@ public class JdbcOpportunityRepository implements OpportunityRepository {
   }
 
   @Override
+  public List<Opportunity> findAll() {
+    return jdbc.queryList(
+        selectColumns() + " ORDER BY created_at", JdbcSupport.noParams(), this::mapRow);
+  }
+
+  @Override
   public List<Opportunity> searchByText(String query, int limit) {
     return jdbc.queryList(
         selectColumns() + " WHERE role LIKE ? COLLATE NOCASE ORDER BY role LIMIT ?",

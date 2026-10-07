@@ -124,9 +124,11 @@ Design references throughout point to:
 
 ### Phase 5: Base CLI Slice
 
-- [ ] 9. Ship the first useful CLI slice (no LLM, no external services)
+- [x] 9. Ship the first useful CLI slice (no LLM, no external services) — **[PR #11](https://github.com/eraserof/job-search-crm/pull/11)**
   - Wire `picocli-spring-boot-starter` so Picocli commands are Spring-managed
-  - Implement global flags: `--json`, `--quiet`, `--verbose`, `--config`, `--help`
+  - Global flags via a `GlobalOptions` `@Mixin` (`--json`, `--quiet`, `--verbose`, `--config`). _Known limitation:_ flags are leaf-level, so they go after the subcommand (`jobcrm opp list --json`), not before it. Root-level global-flag propagation is deferred polish.
+  - Added `findAll()` to `Company`/`Contact`/`Opportunity` repository ports (+ JDBC and in-memory impls) — the `list` commands genuinely needed it (chosen over faking it through search).
+  - Shared CLI infra: `OutputRenderer` (table + pretty-JSON), `ShortRef` (first-8-char UUID prefix resolution with `NoSuchRef`/`AmbiguousRef`), `OutputFormat`.
   - Implement setup commands: `jobcrm init`, `jobcrm config get`, `jobcrm config set`, `jobcrm auth status` (report "not configured" for now)
   - Implement `jobcrm opp new`, `jobcrm opp list`, `jobcrm opp show`, `jobcrm opp advance`, `jobcrm opp attach-contact`
   - Implement `jobcrm contact new`, `jobcrm contact list`, `jobcrm contact show`, `jobcrm contact rename`, `jobcrm contact add-email`

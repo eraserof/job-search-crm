@@ -19,5 +19,8 @@ public interface ContactRepository {
 
   List<Contact> findByCompany(CompanyId company);
 
+  /** All contacts, ordered by display name. Used by the CLI {@code contact list}. */
+  List<Contact> findAll();
+
   void save(Contact contact);
 }

@@ -2,6 +2,7 @@ package com.jobcrm.core.domain.opportunity;
 
 import com.jobcrm.core.domain.company.CompanyId;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -54,6 +55,11 @@ public final class InMemoryOpportunityRepository implements OpportunityRepositor
                 o.lastInteractionAt().isBefore(threshold)
                     || o.lastInteractionAt().equals(threshold))
         .toList();
+  }
+
+  @Override
+  public List<Opportunity> findAll() {
+    return byId.values().stream().sorted(Comparator.comparing(Opportunity::createdAt)).toList();
   }
 
   @Override

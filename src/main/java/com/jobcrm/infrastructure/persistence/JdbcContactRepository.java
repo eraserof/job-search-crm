@@ -83,6 +83,15 @@ public class JdbcContactRepository implements ContactRepository {
   }
 
   @Override
+  public List<Contact> findAll() {
+    return jdbc.queryList(
+        "SELECT id, display_name, phone, linkedin_url, employer_id, default_roles, "
+            + "created_at, updated_at FROM contact ORDER BY display_name COLLATE NOCASE",
+        JdbcSupport.noParams(),
+        this::mapRow);
+  }
+
+  @Override
   public void save(Contact contact) {
     jdbc.inWriteTransaction(
         c -> {

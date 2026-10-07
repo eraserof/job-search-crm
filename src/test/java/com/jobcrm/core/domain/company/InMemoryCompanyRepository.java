@@ -37,6 +37,13 @@ public final class InMemoryCompanyRepository implements CompanyRepository {
   }
 
   @Override
+  public List<Company> findAll() {
+    return byId.values().stream()
+        .sorted(Comparator.comparing(c -> c.name().toLowerCase(Locale.ROOT)))
+        .toList();
+  }
+
+  @Override
   public void save(Company company) {
     Objects.requireNonNull(company, "company");
     byId.put(company.id(), company);
