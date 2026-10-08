@@ -154,11 +154,13 @@ Design references throughout point to:
   - Unit tests (210 total): `JobcrmConfigTest` proves property override wins over YAML and missing config falls back to defaults; `ConfigRedactorTest` proves secrets never appear verbatim; `LogContextTest` proves MDC set/restore including nested contexts; `CliSmokeTest` exercises `config get` end-to-end (reads defaults, masks secrets, rejects unknown keys).
   - _Design refs: development-guidelines.md § Configuration and Secrets, § Logging Conventions_
 
-- [ ] 11. Scheduling primitives (empty schedule)
-  - Configure a single `ScheduledExecutorService` bean for periodic jobs
-  - Configure `Executors.newVirtualThreadPerTaskExecutor()` bean for agent dispatch (used later)
-  - Add a minimal `RulesEngine` class with a public `onTick(now)` method that does nothing yet
-  - Integration test: scheduled executor is present, virtual-thread executor is present
+- [x] 11. Scheduling primitives (empty schedule) — **[PR #13](https://github.com/eraserof/job-search-crm/pull/13)**
+  - `SchedulingConfig` (`com.jobcrm.app`) exposes two executor beans built from JDK static factories (same pattern as `ClockConfig`/`DataSourceConfig`), both `@Bean(destroyMethod = "shutdown")` so the context closes them cleanly on CLI exit:
+    - `@Qualifier("scheduler")` — a `ScheduledExecutorService` (`newScheduledThreadPool(4)`) for periodic jobs. Sized at 4 so a slow poller can't delay the other periodic jobs that fire near the same instant.
+    - `@Qualifier("agentDispatcher")` — a virtual-thread `ExecutorService` (`newVirtualThreadPerTaskExecutor()`) for agent dispatch. Spawn-per-task, not a reused fixed pool: agent work is I/O-bound (blocking on the LLM), which is exactly what virtual threads are for.
+  - `RulesEngine` (`com.jobcrm.rules`, `@Component`) with an empty `onTick(Instant now)` stub. `now` is passed in (not read from a clock inside) to keep the eventual rules deterministic and testable; real `onCalendarSyncTick`/`nightlyStaleSweep` logic lands in Tasks 26-27.
+  - _Nothing is scheduled yet_ — this is the "empty schedule" skeleton. Wiring `scheduler → rulesEngine.onTick(clock.instant())` happens with the daemon (Task 28).
+  - Integration test (`SchedulingConfigTest`, 5 tests): both executor beans and the `RulesEngine` are present; each executor actually runs a submitted task; the dispatcher runs on a virtual thread (proving it's the right bean, not just any `ExecutorService`); `onTick` is callable without throwing.
   - _Design refs: development-guidelines.md § Concurrency, design.md § Rules Engine_
 
 ---
