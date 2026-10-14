@@ -167,11 +167,13 @@ Design references throughout point to:
 
 ### Phase 7: Agent Runtime Foundation
 
-- [ ] 12. AgentRun aggregate and V2 migration
-  - Implement `AgentRun` aggregate with append-only `AgentTurn` sealed hierarchy (`Assistant`, `ToolResultTurn`, `System`, `User`)
-  - Write `V2__agent_runtime.sql` with `agent_run` and `agent_turn` tables per `agent-architecture.md`
-  - Implement `JdbcAgentRunRepository` with round-trip tests
-  - Property test: appended turns preserve order; `AgentRun` cannot be mutated after `finish`/`fail`/`abort`
+- [x] 12. AgentRun aggregate and V3 migration — **[PR #14](https://github.com/eraserof/job-search-crm/pull/14)**
+  - `AgentRun` aggregate (`agentic.domain`): private constructor + `start(agent, inputJson, now)` factory for live creation, and a separate `reconstitute(...)` factory for rebuilding from storage. Append-only `AgentTurn` sealed hierarchy (`Assistant`, `ToolResultTurn`, `System`, `User`). Lifecycle `RUNNING → SUCCESS | FAILED | ABORTED` enforced by guard-clause mutators (`appendTurn`/`finish`/`fail`/`abort`) that throw `IllegalAgentRunState` once terminal; `finish`/`fail`/`abort` all stamp `finishedAt`. `turns()` returns an unmodifiable copy so the only way to add a turn is `appendTurn`.
+  - Supporting value objects: `ToolCall(id, name, argsJson)`, `ToolResult(ok, resultJson, errorMessage)` (option A — defined now rather than deferred to Tasks 13-14, since the audit model genuinely needs them). `AgentTurn` subtypes defensively copy their `List<ToolCall>`.
+  - _Migration numbered `V3`, not `V2`:_ Task 7 already used `V2__company_updated_at.sql`, so the agent runtime schema is `V3__agent_runtime.sql` (`agent_run` + `agent_turn`, `ON DELETE CASCADE`, `UNIQUE(agent_run_id, turn_index)`), faithful to `agent-architecture.md § AgentRun schema`.
+  - `JdbcAgentRunRepository` (`infrastructure.persistence`): two-table aggregate (no separate `AgentTurnRepository` — turns are child entities with no independent lifecycle). `save` upserts the run (`ON CONFLICT(id) DO UPDATE` refreshing the mutable columns: status, finished_at, final_output, tokens, error_message) and batch-inserts turns (`ON CONFLICT(agent_run_id, turn_index) DO NOTHING`, since turns are immutable/append-only). `findById` reads the run row into a private `RunRow` DTO, then the ordered turns, then calls `reconstitute` exactly once. A sealed `switch` maps each turn type → columns on write; the `role` column drives the inverse on read. Value objects that don't fit flat columns (`List<ToolCall>`, `ToolResult`) are serialized into the `_json` columns via Jackson (`AssistantPayload` DTO bundles an Assistant's text + tool calls into `content_json`).
+  - Added a `JacksonConfig` `ObjectMapper` bean — this is a non-web app on the plain `spring-boot-starter`, so Boot's Jackson auto-config never runs and no `ObjectMapper` bean existed; the repository needs one injected.
+  - Round-trip tests (`JdbcAgentRunRepositoryTest`): running-run-with-no-turns; all four turn types in order including a multi-call `Assistant` and a failed `ToolResultTurn` (proving `ok=false` + error survive the JSON mapping); save→finish→save-again updates in place without duplicating turns and preserves the mutable fields; failed run persists error + finishedAt. Property tests (`AgentRunPropertyTest`, jqwik): appended turns preserve order; no lifecycle mutation after a terminal state; `turns()` is unmodifiable.
   - _Design refs: agent-architecture.md § AgentRun, § AgentRun schema_
 
 - [ ] 13. LlmClient port and provider implementations

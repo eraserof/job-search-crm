@@ -31,8 +31,10 @@ import org.junit.jupiter.api.io.TempDir;
  */
 class SchemaMigrationTest {
 
-  // The same pragmas DataSourceConfig applies via Hikari connectionInitSql. Executed one-by-one
-  // here because a raw JDBC Statement.execute only runs the first statement of a multi-statement
+  // The same pragmas DataSourceConfig applies via Hikari connectionInitSql.
+  // Executed one-by-one
+  // here because a raw JDBC Statement.execute only runs the first statement of a
+  // multi-statement
   // string (Hikari handles the combined string specially).
   private static final String[] INIT_PRAGMAS = {
     "PRAGMA journal_mode=WAL",
@@ -64,7 +66,8 @@ class SchemaMigrationTest {
 
   @AfterEach
   void tearDown() throws Exception {
-    // WAL leaves -wal and -shm sidecars next to the db; TempDir cleans the dir, but delete the
+    // WAL leaves -wal and -shm sidecars next to the db; TempDir cleans the dir, but
+    // delete the
     // sidecars explicitly in case the OS holds a handle briefly.
     Files.deleteIfExists(tempDir.resolve("schema-test.db-wal"));
     Files.deleteIfExists(tempDir.resolve("schema-test.db-shm"));
@@ -100,7 +103,9 @@ class SchemaMigrationTest {
             "interaction_contact",
             "opportunity",
             "opportunity_contact",
-            "task");
+            "task",
+            "agent_run",
+            "agent_turn");
   }
 
   @Test
@@ -142,7 +147,8 @@ class SchemaMigrationTest {
         Statement s = c.createStatement()) {
       applyInitPragmas(s);
 
-      // opportunity.company_id references company(id); inserting a dangling reference must fail.
+      // opportunity.company_id references company(id); inserting a dangling reference
+      // must fail.
       org.assertj.core.api.Assertions.assertThatThrownBy(
               () ->
                   s.execute(
