@@ -176,13 +176,16 @@ Design references throughout point to:
   - Round-trip tests (`JdbcAgentRunRepositoryTest`): running-run-with-no-turns; all four turn types in order including a multi-call `Assistant` and a failed `ToolResultTurn` (proving `ok=false` + error survive the JSON mapping); save→finish→save-again updates in place without duplicating turns and preserves the mutable fields; failed run persists error + finishedAt. Property tests (`AgentRunPropertyTest`, jqwik): appended turns preserve order; no lifecycle mutation after a terminal state; `turns()` is unmodifiable.
   - _Design refs: agent-architecture.md § AgentRun, § AgentRun schema_
 
-- [ ] 13. LlmClient port and provider implementations
-  - Define `LlmClient`, `LlmRequest`, `LlmResponse`, `LlmMessage`, `ToolSpec`, `ToolCall`, `LlmModelParams`, `TokenUsage`, `Role` in `agentic.domain`
-  - Implement `AnthropicLlmClient` under `infrastructure.llm` using JDK `HttpClient`; support tool-use turns per the Anthropic Messages API
-  - Implement `MockLlmClient` (Mockito-friendly) that returns pre-programmed responses
-  - Implement `RecordedLlmClient` that reads a fixture JSON and returns responses keyed by turn index
-  - Implement `LlmClientFactory` that resolves an `LlmClient` from `(provider, model, params)` config
-  - Unit tests: `MockLlmClient` returns programmed responses; `RecordedLlmClient` throws when the fixture runs out
+- [x] 13. LlmClient port and provider implementations — **[PR #15](https://github.com/eraserof/job-search-crm/pull/15)**
+  - Defined the port + DTOs in `agentic.domain`: `LlmClient` (interface), `LlmRequest`, `LlmResponse`, `LlmMessage`, `ToolSpec`, `LlmModelParams`, `Role`. (`ToolCall` and `TokenUsage` already existed from Task 12 — reused, not redefined.)
+  - _Optional on boundary DTOs:_ `LlmResponse.finalText` / `LlmMessage.toolCallId` / `LlmModelParams.topK`/`topP` keep `Optional` *fields*, deliberately departing from the "no Optional fields" guideline. Rationale documented inline: these are transient provider-boundary DTOs (not persisted entities), and absence is a genuine, caller-must-handle state — which is exactly what `Optional` is for. The guideline targets aggregates/entities.
+  - `AnthropicLlmClient` (`infrastructure.llm`): one request/response round trip over JDK `HttpClient` (synchronous `send`, relying on the virtual-thread dispatcher later). Builds the request with the **Jackson tree model** (chosen over typed DTOs because the Anthropic body is conditional/union-shaped: optional `system`/`top_k`/`top_p`, `content` that is either a string or a block array, `input_schema` embedded from a schema string). Parses the response's `content` blocks (`text` → `finalText`, `tool_use` → `toolCalls`), `usage` → `TokenUsage`, and keeps the raw body for the audit trail. API key injected from `JobcrmConfig`; transport/JSON failures wrapped at the boundary (`LlmClientException` / `LlmJsonException`), never leaking `java.net.http` or Jackson types.
+  - _Anthropic API behavior documented in `.kiro/specs/job-search-crm/anthropic-api.md`_ (headers, request/response shape, `stop_reason`, the two-turn tool-use pattern, `temperature`/`top_p` exclusivity on 4.5 models, errors) — API behavior only; mapping lives in the adapter.
+  - `MockLlmClient` (test): returns pre-programmed `LlmResponse`s in order and records the requests it received; throws when no more are programmed. For scripting multi-turn agent conversations deterministically.
+  - `RecordedLlmClient` (test): replays a fixture (JSON array of turns) by index; throws when the fixture is exhausted.
+  - `LlmClientFactory`: resolves an `LlmClient` from a provider string (`forProvider("anthropic")`); throws on unknown. Params ride in each `LlmRequest`, so the factory only selects the provider implementation (one provider in prod; mock/recorded are test-scope). The seam that makes "swap provider by config" a one-line change later.
+  - _Known stub (TODO Task 14):_ in `buildBody`, the message-mapping `else` branch doesn't yet emit ASSISTANT text as string content or TOOL `tool_result` block arrays — only matters once the runner replays real multi-turn history, and unexercised by the Mock/Recorded-based tests here.
+  - Unit tests (8; 231 total, 0 failing): Mock returns programmed responses in order / records requests / throws when empty; Recorded replays in order / throws when exhausted / rejects a non-array fixture; Factory resolves anthropic / throws on unknown.
   - _Design refs: agent-architecture.md § LlmClient_
 
 - [ ] 14. Tool registry and agent runner
