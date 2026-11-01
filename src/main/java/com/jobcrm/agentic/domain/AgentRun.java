@@ -37,6 +37,16 @@ public final class AgentRun {
     this.status = AgentRunStatus.RUNNING;
   }
 
+  private AgentRun(AgentRunId id, AgentName agent, String inputJson, Instant startAt) {
+    this.id = id;
+    this.turns = new ArrayList<AgentTurn>();
+    this.agent = agent;
+    this.startedAt = startAt;
+    this.inputJson = inputJson;
+    this.tokens = TokenUsage.ZERO;
+    this.status = AgentRunStatus.RUNNING;
+  }
+
   /**
    * id TEXT PRIMARY KEY, agent TEXT NOT NULL, status TEXT NOT NULL, started_at TEXT NOT NULL,
    * finished_at TEXT, input_json TEXT NOT NULL, final_output TEXT, input_tokens INTEGER NOT NULL
@@ -95,6 +105,10 @@ public final class AgentRun {
 
   public static AgentRun start(AgentName name, String inputJson, Instant now) {
     return new AgentRun(name, inputJson, now);
+  }
+
+  public static AgentRun start(AgentRunId id, AgentName name, String inputJson, Instant now) {
+    return new AgentRun(id, name, inputJson, now);
   }
 
   public List<AgentTurn> turns() {

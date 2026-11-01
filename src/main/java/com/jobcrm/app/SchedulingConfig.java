@@ -14,8 +14,8 @@ public class SchedulingConfig {
     return Executors.newScheduledThreadPool(4);
   }
 
-  @Bean(name = "agentDispatcher", destroyMethod = "shutdown")
-  ExecutorService scheduledExecutor() {
+  @Bean(name = "agentExecutor", destroyMethod = "shutdown")
+  ExecutorService agentExecutor() {
     return Executors.newVirtualThreadPerTaskExecutor();
   }
 }
