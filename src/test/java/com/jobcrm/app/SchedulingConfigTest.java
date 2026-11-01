@@ -31,7 +31,7 @@ class SchedulingConfigTest {
   ScheduledExecutorService scheduler;
 
   @Autowired
-  @Qualifier("agentDispatcher")
+  @Qualifier("agentExecutor")
   ExecutorService agentDispatcher;
 
   @Autowired RulesEngine rulesEngine;
