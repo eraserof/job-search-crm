@@ -148,15 +148,89 @@ function Get-Body([string]$out, [string]$sig) {
   return $out
 }
 
+# Adds "import X;" lines after the last existing import (or after the package line), in order.
 function Add-Imports([string]$src, [string[]]$imports, [string]$eol) {
   foreach ($imp in $imports) {
     if (-not $imp) { continue }
-    $line = "import $imp;"
-    if ($src.Contains($line)) { continue }
+    $line = "import $($imp.Trim());"
+    if ([regex]::IsMatch($src, '(?m)^\s*' + [regex]::Escape($line) + '\s*$')) { continue }
+    $lastImport = [regex]::Matches($src, '(?m)^import\s+[^;]+;[^\n]*\n')
+    if ($lastImport.Count -gt 0) {
+      $m = $lastImport[$lastImport.Count - 1]
+      $src = $src.Insert($m.Index + $m.Length, $line + $eol)
+      continue
+    }
     $pk = [regex]::Match($src, '(?m)^package\s+[^;]+;[^\n]*\n')
-    if ($pk.Success) { $at = $pk.Index + $pk.Length; $src = $src.Insert($at, $eol + $line + $eol) }
+    if ($pk.Success) { $src = $src.Insert($pk.Index + $pk.Length, $eol + $line + $eol) }
+    else { $src = $line + $eol + $src }
   }
   return $src
+}
+
+# ---------- auto-import: resolve "cannot find symbol: class X" without a model call ----------
+# Common JDK names, used only when the repo itself gives no answer.
+$script:JdkImports = @{
+  'List' = 'java.util.List'; 'ArrayList' = 'java.util.ArrayList'; 'Map' = 'java.util.Map'
+  'HashMap' = 'java.util.HashMap'; 'LinkedHashMap' = 'java.util.LinkedHashMap'; 'Set' = 'java.util.Set'
+  'HashSet' = 'java.util.HashSet'; 'LinkedHashSet' = 'java.util.LinkedHashSet'; 'Optional' = 'java.util.Optional'
+  'Objects' = 'java.util.Objects'; 'UUID' = 'java.util.UUID'; 'Collections' = 'java.util.Collections'
+  'Arrays' = 'java.util.Arrays'; 'Comparator' = 'java.util.Comparator'; 'Locale' = 'java.util.Locale'
+  'Deque' = 'java.util.Deque'; 'ArrayDeque' = 'java.util.ArrayDeque'; 'Iterator' = 'java.util.Iterator'
+  'TreeMap' = 'java.util.TreeMap'; 'Matcher' = 'java.util.regex.Matcher'; 'Pattern' = 'java.util.regex.Pattern'
+  'Collectors' = 'java.util.stream.Collectors'; 'Stream' = 'java.util.stream.Stream'
+  'IntStream' = 'java.util.stream.IntStream'; 'Function' = 'java.util.function.Function'
+  'Supplier' = 'java.util.function.Supplier'; 'Consumer' = 'java.util.function.Consumer'
+  'Predicate' = 'java.util.function.Predicate'; 'BiFunction' = 'java.util.function.BiFunction'
+  'Instant' = 'java.time.Instant'; 'Duration' = 'java.time.Duration'; 'Clock' = 'java.time.Clock'
+  'LocalDate' = 'java.time.LocalDate'; 'LocalDateTime' = 'java.time.LocalDateTime'
+  'Path' = 'java.nio.file.Path'; 'Files' = 'java.nio.file.Files'; 'StandardOpenOption' = 'java.nio.file.StandardOpenOption'
+  'StandardCharsets' = 'java.nio.charset.StandardCharsets'; 'IOException' = 'java.io.IOException'
+  'UncheckedIOException' = 'java.io.UncheckedIOException'; 'InputStream' = 'java.io.InputStream'
+  'PrintWriter' = 'java.io.PrintWriter'; 'URI' = 'java.net.URI'; 'BigDecimal' = 'java.math.BigDecimal'
+  'TimeUnit' = 'java.util.concurrent.TimeUnit'; 'ConcurrentHashMap' = 'java.util.concurrent.ConcurrentHashMap'
+}
+$script:ImportIndex = $null
+
+# simple name -> set of fully qualified names, from every import and class declared in the repo.
+function Get-ImportIndex {
+  if ($script:ImportIndex) { return $script:ImportIndex }
+  $index = @{}
+  $roots = @('src', 'codegen/src') | ForEach-Object { Join-Path $root $_ } | Where-Object { Test-Path $_ }
+  foreach ($file in (Get-ChildItem -Path $roots -Recurse -Filter *.java -File)) {
+    $text = [IO.File]::ReadAllText($file.FullName, $utf8)
+    foreach ($m in [regex]::Matches($text, '(?m)^import\s+([a-z][\w.]*\.([A-Z]\w*))\s*;')) {
+      $simple = $m.Groups[2].Value
+      if (-not $index.ContainsKey($simple)) { $index[$simple] = New-Object System.Collections.Generic.HashSet[string] }
+      [void]$index[$simple].Add($m.Groups[1].Value)
+    }
+    $pkg = [regex]::Match($text, '(?m)^package\s+([\w.]+)\s*;')
+    if ($pkg.Success) {
+      $simple = $file.BaseName
+      if (-not $index.ContainsKey($simple)) { $index[$simple] = New-Object System.Collections.Generic.HashSet[string] }
+      [void]$index[$simple].Add("$($pkg.Groups[1].Value).$simple")
+    }
+  }
+  $script:ImportIndex = $index
+  return $index
+}
+
+# The single import that resolves $simple, or $null when unknown or ambiguous.
+function Resolve-Import([string]$simple, [string]$targetPackage) {
+  $index = Get-ImportIndex
+  $candidates = @()
+  if ($index.ContainsKey($simple)) {
+    # Same-package classes need no import; if javac cannot see one, an import will not help.
+    $candidates = @($index[$simple] | Where-Object { $_ -ne "$targetPackage.$simple" })
+  }
+  if ($candidates.Count -eq 0 -and $script:JdkImports.ContainsKey($simple)) { $candidates = @($script:JdkImports[$simple]) }
+  if ($candidates.Count -eq 1) { return $candidates[0] }
+  return $null
+}
+
+# Class names javac could not find in this file's errors, e.g. "symbol:   class Matcher".
+function Get-MissingClasses([string]$fileErrors) {
+  return @([regex]::Matches($fileErrors, 'symbol:\s+class\s+(\w+)') | ForEach-Object { $_.Groups[1].Value } |
+    Select-Object -Unique)
 }
 
 function Splice([string]$src, [string]$sig, [string]$body, [string[]]$imports) {
@@ -274,12 +348,32 @@ function Invoke-CodeAttempt([string]$prompt, [string]$tag) {
     return @{ Ok = $false; Clarify = $true; Body = $clean; Errs = $clean }
   }
   $body = Get-Body $clean $job.signature
-  Write-Text $job.target (Splice $original $job.signature $body $job.imports)
+  Write-Text $job.target (Splice $original $job.signature $body $script:runImports)
   if ($NoCompile) { return @{ Ok = $true; Clarify = $false; Body = $body; Errs = '' } }
   $c = Invoke-Compile
   Write-Text "$runDir/$tag.compile.txt" $c.Output
   if ($c.Ok) { return @{ Ok = $true; Clarify = $false; Body = $body; Errs = '' } }
-  return @{ Ok = $false; Clarify = $false; Body = $body; Errs = (Get-FileErrors $c.Output) }
+  $errs = Get-FileErrors $c.Output
+
+  # Missing imports are fixed here, without spending an attempt or a model call.
+  $targetPackage = [regex]::Match($original, '(?m)^package\s+([\w.]+)\s*;').Groups[1].Value
+  for ($fix = 1; $fix -le 3; $fix++) {
+    $added = @()
+    foreach ($simple in (Get-MissingClasses $errs)) {
+      $fqn = Resolve-Import $simple $targetPackage
+      if ($fqn -and ($script:runImports -notcontains $fqn)) { $added += $fqn }
+    }
+    if ($added.Count -eq 0) { break }
+    $script:runImports = @($script:runImports) + $added
+    $script:autoImported = @($script:autoImported) + $added
+    Write-Host "auto-import: $($added -join ', ') (recompiling, no model call)"
+    Write-Text $job.target (Splice $original $job.signature $body $script:runImports)
+    $c = Invoke-Compile
+    Write-Text "$runDir/$tag.autoimport-$fix.compile.txt" $c.Output
+    if ($c.Ok) { return @{ Ok = $true; Clarify = $false; Body = $body; Errs = '' } }
+    $errs = Get-FileErrors $c.Output
+  }
+  return @{ Ok = $false; Clarify = $false; Body = $body; Errs = $errs }
 }
 
 # Retry prompt: the errors as a warning, WITHOUT the failed code (the 7B copies what it is shown).
@@ -346,6 +440,9 @@ $jobPrompt = Read-Text $job.prompt
 $total = $CodeAttempts * ($RepairRounds + 1)
 Write-Host "job=$name model=$($cfg.model) @ $($cfg.baseUrl)  (code x$CodeAttempts, repair rounds $RepairRounds)"
 
+$script:runImports = @($job.imports | Where-Object { $_ })
+$script:autoImported = @()
+
 $succeeded = $false
 $n = 0
 try {
@@ -370,6 +467,12 @@ try {
 finally {
   # Runs on success, failure, Ctrl+C, or an exception: never leave a broken splice behind.
   if (-not $succeeded) { Write-Text $job.target $original }
+  # Keep auto-resolved imports in the job file, so a rerun starts with them.
+  if (@($script:autoImported).Count -gt 0) {
+    $job | Add-Member -NotePropertyName imports -NotePropertyValue @($script:runImports) -Force
+    Write-Text $JobFile ($job | ConvertTo-Json -Depth 5)
+    Write-Text "$runDir/auto-imports.txt" (@($script:autoImported) -join "`n")
+  }
 }
 
 if ($succeeded) {
@@ -393,6 +496,7 @@ if ($succeeded) {
     $suffix = if ($n -gt $CodeAttempts) { ', repaired' } else { '' }
     $subject = "codegen: $jobId ($n attempt(s)$suffix)"
     $bodyMsg = "Generated by codegen/orchestrate.ps1. Plan: $planName. Model: $($cfg.model). Run: $runDir"
+    if (@($script:autoImported).Count -gt 0) { $bodyMsg += " Auto-imported: $(@($script:autoImported) -join ', ')." }
     & git add -- $job.target
     if ($LASTEXITCODE -eq 0) { & git commit -q -m $subject -m $bodyMsg -- $job.target }
     if ($LASTEXITCODE -ne 0) {
