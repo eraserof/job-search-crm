@@ -14,6 +14,9 @@ public record Escalation(Integer codeAttempts, Integer repairRounds, String repa
    * becomes 1), repairRounds 0 (any negative value becomes 0), repairMode "prompt".
    */
   public Escalation withDefaults() {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    Integer nextCodeAttempts = codeAttempts() == null ? 2 : Math.max(1, codeAttempts());
+    Integer nextRepairRounds = repairRounds() == null ? 0 : Math.max(0, repairRounds());
+    String nextRepairMode = repairMode() == null ? "prompt" : repairMode();
+    return new Escalation(nextCodeAttempts, nextRepairRounds, nextRepairMode);
   }
 }
