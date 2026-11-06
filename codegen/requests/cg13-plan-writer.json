@@ -1,0 +1,10 @@
+{
+  "ask": "Implement ONLY PlanWriter.write(Plan plan, Path dir, String rules, Repo repo, ObjectMapper json) in codegen/src/main/java/com/jobcrm/codegen/plan/PlanWriter.java, following its javadoc steps exactly. Wrap the whole body in one try block that catches JsonProcessingException e and throws new UncheckedIOException(\"cannot write plan\", e). Number jobs from 1 with an int counter over plan.jobs(). PlanPrompts.codePrompt(String rules, PlanJob job) returns the prompt text. Job has the constructor new Job(String stage, String target, String signature, String prompt, List<String> imports). Repo has write(Path file, String text) and relative(Path path).",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/plan/PlanWriter.java",
+    "codegen/src/main/java/com/jobcrm/codegen/plan/Plan.java",
+    "codegen/src/main/java/com/jobcrm/codegen/plan/PlanJob.java",
+    "codegen/src/main/java/com/jobcrm/codegen/job/Job.java",
+    "codegen/src/main/java/com/jobcrm/codegen/Repo.java"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "ask": "Implement ONLY RetryingChatClient.complete(ResolvedStage stage, String prompt, JsonNode responseFormat) in codegen/src/main/java/com/jobcrm/codegen/llm/RetryingChatClient.java. Its javadoc lists the exact steps; carry them over in order: loop calling delegate.complete; rethrow non-retryable LlmException immediately; count failures and ask policy.delayAfter(failures) (returns Optional<Duration>); when empty rethrow; otherwise print the retry message with out.println and out.flush(), then sleeper.sleep(delay); on InterruptedException restore the interrupt flag and throw LlmException.fatal(\"interrupted while waiting to retry\", e) where e is the original LlmException. Use a while (true) loop with an int failures counter; declare the caught exception as LlmException e and the interrupted one as InterruptedException ie.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/llm/RetryingChatClient.java",
+    "codegen/src/main/java/com/jobcrm/codegen/llm/RetryPolicy.java",
+    "codegen/src/main/java/com/jobcrm/codegen/llm/Sleeper.java",
+    "codegen/src/main/java/com/jobcrm/codegen/llm/LlmException.java",
+    "codegen/src/main/java/com/jobcrm/codegen/llm/ChatClient.java"
+  ]
+}

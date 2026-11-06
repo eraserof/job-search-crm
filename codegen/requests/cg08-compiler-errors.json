@@ -1,0 +1,6 @@
+{
+  "ask": "Implement ONLY CompilerErrors.forFile(String output, String fileName) in codegen/src/main/java/com/jobcrm/codegen/build/CompilerErrors.java. Carry the javadoc's five steps over exactly: split with output.split(\"\\\\R\"); a block starts at a line where Pattern.compile(Pattern.quote(fileName) + \":\\\\d+: error:\").matcher(line).find() is true; the block is that line plus at most the next 4 lines, stopping before a line that matches the error/warning pattern or the \"N errors\" pattern; strip every line; join the block with \"\\n\" into a LinkedHashSet<String>; return the set joined with \"\\n\", or output unchanged when the set is empty. Compile the three Patterns once, as local variables before the loop.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/build/CompilerErrors.java"
+  ]
+}
