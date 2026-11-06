@@ -1,0 +1,7 @@
+{
+  "ask": "Implement ONLY GradleCompiler.command() and GradleCompiler.compile() in codegen/src/main/java/com/jobcrm/codegen/build/GradleCompiler.java, command first, following their javadoc exactly. command(): boolean windows = System.getProperty(\"os.name\").toLowerCase().startsWith(\"windows\"); return List.of(\"cmd.exe\", \"/c\", root.resolve(\"gradlew.bat\").toString(), \"classes\", \"testClasses\", \"--console=plain\", \"-q\") on Windows, else List.of(root.resolve(\"gradlew\").toString(), \"classes\", \"testClasses\", \"--console=plain\", \"-q\"). compile(): Process process = new ProcessBuilder(command()).directory(root.toFile()).redirectErrorStream(true).start(); read String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8) BEFORE int exitCode = process.waitFor(); return new CompileResult(exitCode == 0, output). Catch IOException e: throw new UncheckedIOException(\"cannot run gradle\", e). Catch InterruptedException e: Thread.currentThread().interrupt(); return new CompileResult(false, \"interrupted\"). CompileResult is the nested record Compiler.CompileResult(boolean ok, String output), visible here as CompileResult because GradleCompiler implements Compiler.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/build/GradleCompiler.java",
+    "codegen/src/main/java/com/jobcrm/codegen/build/Compiler.java"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "ask": "Implement ONLY BodyExtractor.extractBody(String cleaned, String signature) in codegen/src/main/java/com/jobcrm/codegen/java/BodyExtractor.java, following its javadoc. Exact steps: String wrapped = \"class Wrapper__ {\\n\" + cleaned + \"\\n}\"; then inside try { Optional<MethodLocator.BodyRange> range = MethodLocator.find(wrapped, signature); if (range.isPresent()) { String inner = wrapped.substring(range.get().open() + 1, range.get().close()); remove only leading and trailing '\\n' and '\\r' characters with inner.replaceAll(\"^[\\\\r\\\\n]+\", \"\").replaceAll(\"[\\\\r\\\\n]+$\", \"\") and return it; } } catch (IllegalArgumentException e) { return cleaned; } and finally return cleaned. MethodLocator is in the same package: static Optional<BodyRange> find(String source, String signature), where BodyRange is the nested record MethodLocator.BodyRange(int open, int close, String indent) with accessors open(), close(), indent(); write the type as MethodLocator.BodyRange. Do not plan clean, isClarification, or any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/java/BodyExtractor.java"
+  ]
+}

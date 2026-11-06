@@ -1,0 +1,8 @@
+{
+  "ask": "Implement ONLY these four methods in codegen/src/main/java/com/jobcrm/codegen/vcs/GitCli.java, in this order, following their javadoc: git(List<String> args), currentBranch(), isDirty(Path file), commitOnly(Path file, String subject, String body). git: List<String> command = new ArrayList<>(); command.add(\"git\"); command.addAll(args); start new ProcessBuilder(command).directory(root.toFile()).redirectErrorStream(true).start(); read String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8) BEFORE int exit = process.waitFor(); if exit != 0, String cmd = String.join(\" \", args); throw new VcsException(\"git \" + cmd + \" failed: \" + output.strip()); return output.strip(). Catch IOException e: throw new VcsException(\"cannot run git\", e). Catch InterruptedException e: Thread.currentThread().interrupt(); throw new VcsException(\"interrupted\", e). currentBranch: return git(List.of(\"rev-parse\", \"--abbrev-ref\", \"HEAD\")). isDirty: String path = root.relativize(file.toAbsolutePath().normalize()).toString().replace('\\\\', '/'); return !git(List.of(\"status\", \"--porcelain\", \"--\", path)).isBlank(). commitOnly: same path; git(List.of(\"add\", \"--\", path)); git(List.of(\"commit\", \"-q\", \"-m\", subject, \"-m\", body, \"--\", path)); return git(List.of(\"rev-parse\", \"--short\", \"HEAD\")). VcsException has constructors (String message) and (String message, Throwable cause).",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/vcs/GitCli.java",
+    "codegen/src/main/java/com/jobcrm/codegen/vcs/Vcs.java",
+    "codegen/src/main/java/com/jobcrm/codegen/vcs/VcsException.java"
+  ]
+}
