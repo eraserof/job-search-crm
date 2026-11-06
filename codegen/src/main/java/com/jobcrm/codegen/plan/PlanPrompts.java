@@ -28,7 +28,7 @@ public final class PlanPrompts {
    * ASK first.
    */
   public static String planner(String template, String ask, String context) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    return template.replace("{{ASK}}", ask).replace("{{CONTEXT}}", context);
   }
 
   /**
