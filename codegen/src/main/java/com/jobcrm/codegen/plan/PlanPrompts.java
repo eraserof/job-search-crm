@@ -55,7 +55,16 @@ public final class PlanPrompts {
    * before it.
    */
   public static Optional<String> extractJson(String raw) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    String cleaned = PlanPrompts.THINK.matcher(raw).replaceAll("");
+    int start = cleaned.indexOf('{');
+    if (start == -1) {
+        return Optional.empty();
+    }
+    int end = cleaned.lastIndexOf('}');
+    if (end < start) {
+        return Optional.empty();
+    }
+    return Optional.of(cleaned.substring(start, end + 1));
   }
 
   /**
