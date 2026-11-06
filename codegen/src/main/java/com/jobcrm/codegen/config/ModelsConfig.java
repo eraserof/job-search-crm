@@ -1,5 +1,7 @@
 package com.jobcrm.codegen.config;
 
+import java.time.Duration;
+
 import java.io.IOException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +40,20 @@ public record ModelsConfig(
    * its platform is missing ("stage 'x' uses unknown platform 'y'").
    */
   public ResolvedStage resolve(String stageName) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    StageSpec stage = stages() == null ? null : stages().get(stageName);
+    if (stage == null) {
+        throw new ConfigException("stage '" + stageName + "' not in models.json");
+    }
+    Platform platform = platforms() == null ? null : platforms().get(stage.platform());
+    if (platform == null) {
+        throw new ConfigException("stage '" + stageName + "' uses unknown platform '" + stage.platform() + "'");
+    }
+    double temperature = stage.temperature() == null ? 0.2d : stage.temperature().doubleValue();
+    long firstTokenSeconds = stage.firstTokenTimeoutSec() == null ? 900L : stage.firstTokenTimeoutSec().longValue();
+    Duration firstTokenTimeout = Duration.ofSeconds(firstTokenSeconds);
+    long idleSeconds = stage.idleTimeoutSec() == null ? 120L : stage.idleTimeoutSec().longValue();
+    Duration idleTimeout = Duration.ofSeconds(idleSeconds);
+    return new ResolvedStage(stageName, stage.platform(), platform, stage.model(), temperature, firstTokenTimeout, idleTimeout);
   }
 
   /** True if a stage with this name exists. */
