@@ -38,7 +38,8 @@ public final class PlanPrompts {
    * "(none)".
    */
   public static String retry(String basePrompt, String previousJson, List<String> errors) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    String previous = previousJson == null ? "(none)" : previousJson;
+    return basePrompt + "\n\n=== Your previous plan was rejected ===\n" + previous + "\n\n=== Validation errors ===\n" + String.join("\n", errors) + "\n\nReturn a corrected JSON plan only.";
   }
 
   /**
