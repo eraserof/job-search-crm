@@ -44,6 +44,29 @@ public final class RetryingChatClient implements ChatClient {
   @Override
   public String complete(ResolvedStage stage, String prompt, JsonNode responseFormat)
       throws LlmException {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    int failures = 0;
+    while (true) {
+        try {
+            return delegate.complete(stage, prompt, responseFormat);
+        } catch (LlmException e) {
+            if (!e.retryable()) {
+                throw e;
+            }
+            failures++;
+            Optional<Duration> delayOpt = policy.delayAfter(failures);
+            if (!delayOpt.isPresent()) {
+                throw e;
+            }
+            Duration delay = delayOpt.get();
+            out.println("model call failed (" + e.getMessage() + "); retrying in " + delay.toSeconds() + "s");
+            out.flush();
+            try {
+                sleeper.sleep(delay);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw LlmException.fatal("interrupted while waiting to retry", e);
+            }
+        }
+    }
   }
 }
