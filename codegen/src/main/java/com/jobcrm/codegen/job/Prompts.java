@@ -39,6 +39,7 @@ public final class Prompts {
    * String.replace} (literal, not regex), replacing JOB_PROMPT first.
    */
   public static String repair(String template, String jobPrompt, Attempt last) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    String result = template.replace("{{JOB_PROMPT}}", jobPrompt);
+    return result.replace("{{PROBLEM}}", problem(last));
   }
 }
