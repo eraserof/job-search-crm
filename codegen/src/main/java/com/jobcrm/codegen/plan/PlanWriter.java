@@ -34,6 +34,28 @@ public final class PlanWriter {
    * </ol>
    */
   public static List<Path> write(Plan plan, Path dir, String rules, Repo repo, ObjectMapper json) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    ArrayList<Path> result = new ArrayList<>();
+    try {
+        String planJson = json.writerWithDefaultPrettyPrinter().writeValueAsString(plan);
+        repo.write(dir.resolve("plan.json"), planJson);
+
+        int i = 0;
+        for (PlanJob job : plan.jobs()) {
+            i++;
+            String stem = String.format("%02d-%s", i, job.id());
+            Path promptFile = dir.resolve(stem + ".prompt.txt");
+            repo.write(promptFile, PlanPrompts.codePrompt(rules, job));
+
+            Job j = new Job("code", job.target(), job.signature(), repo.relative(promptFile), job.imports());
+            String jobJson = json.writerWithDefaultPrettyPrinter().writeValueAsString(j);
+            Path jobFile = dir.resolve(stem + ".job.json");
+            repo.write(jobFile, jobJson);
+
+            result.add(jobFile);
+        }
+    } catch (JsonProcessingException e) {
+        throw new UncheckedIOException("cannot write plan", e);
+    }
+    return result;
   }
 }
