@@ -6,8 +6,8 @@ import java.util.Optional;
 
 /**
  * How long to wait before each retry of a retryable model failure. {@code delays.get(0)} is the
- * wait after the first failure, {@code delays.get(1)} after the second, and so on; once the list
- * is used up, there are no more retries.
+ * wait after the first failure, {@code delays.get(1)} after the second, and so on; once the list is
+ * used up, there are no more retries.
  */
 public record RetryPolicy(List<Duration> delays) {
 
@@ -17,7 +17,8 @@ public record RetryPolicy(List<Duration> delays) {
 
   /** 30 s, 60 s, 120 s: three retries, about 3.5 minutes of waiting in total. */
   public static RetryPolicy standard() {
-    return new RetryPolicy(List.of(Duration.ofSeconds(30), Duration.ofSeconds(60), Duration.ofSeconds(120)));
+    return new RetryPolicy(
+        List.of(Duration.ofSeconds(30), Duration.ofSeconds(60), Duration.ofSeconds(120)));
   }
 
   /** No retries at all: every failure is final. */
@@ -32,10 +33,10 @@ public record RetryPolicy(List<Duration> delays) {
    */
   public Optional<Duration> delayAfter(int failuresSoFar) {
     if (failuresSoFar < 1) {
-        return Optional.empty();
+      return Optional.empty();
     }
     if (failuresSoFar > delays().size()) {
-        return Optional.empty();
+      return Optional.empty();
     }
     int index = failuresSoFar - 1;
     return Optional.of(delays().get(index));

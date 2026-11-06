@@ -79,7 +79,8 @@ public final class Planner {
         }
       }
       if (errors.isEmpty()) {
-        String rules = PlanPrompts.rulesHeader(repo.read(repo.codegenDir().resolve("TEMPLATE.txt")));
+        String rules =
+            PlanPrompts.rulesHeader(repo.read(repo.codegenDir().resolve("TEMPLATE.txt")));
         List<Path> jobs = PlanWriter.write(plan, log.dir(), rules, repo, json);
         for (Path job : jobs) {
           say("  job %s", job.getFileName());

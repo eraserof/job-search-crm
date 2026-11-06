@@ -1,6 +1,8 @@
 package com.jobcrm.codegen.job;
 
-/** Builds the retry and repair prompts. Templates live in resources; see {@code repair-prompt.txt}. */
+/**
+ * Builds the retry and repair prompts. Templates live in resources; see {@code repair-prompt.txt}.
+ */
 public final class Prompts {
 
   private Prompts() {}
@@ -17,7 +19,10 @@ public final class Prompts {
    * </pre>
    */
   public static String hint(String jobPrompt, String errors) {
-    return jobPrompt + "\n\n=== Warning: an earlier attempt at this method failed to compile ===\n" + errors + "\n\nWrite the method so these errors cannot happen. Output ONLY the method implementation.";
+    return jobPrompt
+        + "\n\n=== Warning: an earlier attempt at this method failed to compile ===\n"
+        + errors
+        + "\n\nWrite the method so these errors cannot happen. Output ONLY the method implementation.";
   }
 
   /**
@@ -27,16 +32,16 @@ public final class Prompts {
    */
   public static String problem(Attempt last) {
     if (last.clarification()) {
-        return "The coder asked for clarification instead of writing code:\n" + last.errors();
+      return "The coder asked for clarification instead of writing code:\n" + last.errors();
     } else {
-        return "Its last attempt:\n" + last.body() + "\n\nCompiler errors:\n" + last.errors();
+      return "Its last attempt:\n" + last.body() + "\n\nCompiler errors:\n" + last.errors();
     }
   }
 
   /**
-   * The repair prompt: {@code template} with {@code "{{JOB_PROMPT}}"} replaced by {@code
-   * jobPrompt} and {@code "{{PROBLEM}}"} replaced by {@link #problem(Attempt)}. Use {@code
-   * String.replace} (literal, not regex), replacing JOB_PROMPT first.
+   * The repair prompt: {@code template} with {@code "{{JOB_PROMPT}}"} replaced by {@code jobPrompt}
+   * and {@code "{{PROBLEM}}"} replaced by {@link #problem(Attempt)}. Use {@code String.replace}
+   * (literal, not regex), replacing JOB_PROMPT first.
    */
   public static String repair(String template, String jobPrompt, Attempt last) {
     String result = template.replace("{{JOB_PROMPT}}", jobPrompt);

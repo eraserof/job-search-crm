@@ -27,7 +27,8 @@ class SplicerTest {
         }
         """;
 
-    String out = Splicer.splice(source, "List<String> names()", "    return List.of(\"a\");", List.of());
+    String out =
+        Splicer.splice(source, "List<String> names()", "    return List.of(\"a\");", List.of());
 
     assertThat(out)
         .isEqualTo(
@@ -52,9 +53,11 @@ class SplicerTest {
   void keepsWindowsLineEndings() {
     String source = "class A {\r\n  int one() {\r\n    return 0;\r\n  }\r\n}\r\n";
 
-    String out = Splicer.splice(source, "int one()", "\n    int x = 1;\n    return x;\n", List.of());
+    String out =
+        Splicer.splice(source, "int one()", "\n    int x = 1;\n    return x;\n", List.of());
 
-    assertThat(out).isEqualTo("class A {\r\n  int one() {\r\n    int x = 1;\r\n    return x;\r\n  }\r\n}\r\n");
+    assertThat(out)
+        .isEqualTo("class A {\r\n  int one() {\r\n    int x = 1;\r\n    return x;\r\n  }\r\n}\r\n");
   }
 
   @Test
@@ -70,7 +73,8 @@ class SplicerTest {
         }
         """;
 
-    String out = Splicer.splice(source, "void f()", "", List.of("java.util.List", "java.util.UUID"));
+    String out =
+        Splicer.splice(source, "void f()", "", List.of("java.util.List", "java.util.UUID"));
 
     assertThat(out).contains("import java.util.List;\nimport java.util.UUID;\n\nclass A");
     assertThat(out.split("import java.util.List;", -1)).hasSize(2);

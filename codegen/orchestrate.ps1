@@ -378,7 +378,10 @@ if ($succeeded) {
 
   if ($autoCommit) {
     # Commit ONLY the target (git commit <path> ignores anything else that happens to be staged).
-    $jobId = $name -replace '\.job$', ''
+    # Subject names the class and method, e.g. "PlanPrompts.planner": plan job numbers repeat.
+    $className = [IO.Path]::GetFileNameWithoutExtension($job.target)
+    $methodMatch = [regex]::Match($job.signature, '(\w+)\s*\(')
+    $jobId = if ($methodMatch.Success) { "$className.$($methodMatch.Groups[1].Value)" } else { $name -replace '\.job$', '' }
     $planName = Split-Path (Split-Path (Resolve-RepoPath $JobFile) -Parent) -Leaf
     $suffix = if ($n -gt $CodeAttempts) { ', repaired' } else { '' }
     $subject = "codegen: $jobId ($n attempt(s)$suffix)"

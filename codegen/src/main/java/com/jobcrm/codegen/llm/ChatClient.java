@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jobcrm.codegen.config.ResolvedStage;
 
 /**
- * Sends ONE fresh single-user-message chat request and returns the assistant's text. No history
- * is kept between calls: every call is a clean slate.
+ * Sends ONE fresh single-user-message chat request and returns the assistant's text. No history is
+ * kept between calls: every call is a clean slate.
  */
 public interface ChatClient {
 

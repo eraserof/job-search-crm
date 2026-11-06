@@ -13,8 +13,8 @@ import picocli.CommandLine;
  * codegen job codegen/jobs/x.json [--code-attempts N] [--repair-rounds N] [--no-compile]
  * </pre>
  *
- * Exit codes: 0 ok, 1 failed, 2 refused or bad input, 3 needs clarification, 4 model
- * unavailable, 5 commit failed.
+ * Exit codes: 0 ok, 1 failed, 2 refused or bad input, 3 needs clarification, 4 model unavailable, 5
+ * commit failed.
  */
 public final class Main {
 

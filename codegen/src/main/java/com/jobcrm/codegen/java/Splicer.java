@@ -3,8 +3,8 @@ package com.jobcrm.codegen.java;
 import java.util.List;
 
 /**
- * Replaces one method body in a source file and adds imports. Everything outside the body's
- * braces is kept byte-for-byte, including the file's line endings.
+ * Replaces one method body in a source file and adds imports. Everything outside the body's braces
+ * is kept byte-for-byte, including the file's line endings.
  */
 public final class Splicer {
 
@@ -21,7 +21,9 @@ public final class Splicer {
     MethodLocator.BodyRange range =
         MethodLocator.find(source, signature)
             .orElseThrow(
-                () -> new SpliceException("signature not found exactly once in target: " + signature));
+                () ->
+                    new SpliceException(
+                        "signature not found exactly once in target: " + signature));
     String eol = source.contains("\r\n") ? "\r\n" : "\n";
     String inner = String.join(eol, trimBlankLines(body).lines().toList());
     String spliced =

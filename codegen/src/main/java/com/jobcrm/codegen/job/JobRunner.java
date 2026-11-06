@@ -17,21 +17,23 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Runs one job up the escalation ladder:
  *
  * <ol>
- *   <li>code stage, {@code codeAttempts} times; retries get the errors as a hint, never the
- *       failed code;
+ *   <li>code stage, {@code codeAttempts} times; retries get the errors as a hint, never the failed
+ *       code;
  *   <li>repair stage rewrites the job prompt (not the code);
  *   <li>code stage again with the revised prompt; repeat for {@code repairRounds}.
  * </ol>
  *
  * Every attempt is spliced onto the ORIGINAL file, so failures never stack. On any failure,
- * including an exception, the target is restored. A prompt that succeeded after repair replaces
- * the job's prompt file (the first original is kept as {@code *.orig}). With auto-commit, the
- * target alone is committed after it compiles.
+ * including an exception, the target is restored. A prompt that succeeded after repair replaces the
+ * job's prompt file (the first original is kept as {@code *.orig}). With auto-commit, the target
+ * alone is committed after it compiles.
  */
 public final class JobRunner {
 
@@ -73,12 +75,16 @@ public final class JobRunner {
         String branch = vcs.currentBranch();
         if (branch.equals("main") || branch.equals("master")) {
           return refused(
-              "auto-commit: refusing to commit on '" + branch + "'. switch to a task branch,"
+              "auto-commit: refusing to commit on '"
+                  + branch
+                  + "'. switch to a task branch,"
                   + " or use --no-auto-commit");
         }
         if (vcs.isDirty(target)) {
           return refused(
-              "auto-commit: " + job.target() + " has uncommitted changes. commit or stash them"
+              "auto-commit: "
+                  + job.target()
+                  + " has uncommitted changes. commit or stash them"
                   + " first, or use --no-auto-commit");
         }
       } catch (VcsException e) {
@@ -92,7 +98,11 @@ public final class JobRunner {
         return refused(
             n < 0
                 ? job.target() + " does not parse, so the method cannot be located"
-                : "signature found " + n + " times in " + job.target() + " (must be exactly 1): "
+                : "signature found "
+                    + n
+                    + " times in "
+                    + job.target()
+                    + " (must be exactly 1): "
                     + job.signature());
       }
     } catch (IllegalArgumentException e) {
@@ -109,11 +119,7 @@ public final class JobRunner {
     int total = options.codeAttempts() * (options.repairRounds() + 1);
     say(
         "job=%s model=%s @ %s  (code x%d, repair rounds %d)",
-        name,
-        code.model(),
-        code.platform().base(),
-        options.codeAttempts(),
-        options.repairRounds());
+        name, code.model(), code.platform().base(), options.codeAttempts(), options.repairRounds());
 
     boolean succeeded = false;
     int n = 0;
@@ -130,7 +136,17 @@ public final class JobRunner {
                   ? Prompts.hint(jobPrompt, last.errors())
                   : jobPrompt;
           say("attempt %d/%d (round %d, code %d): calling model...", n, total, round, a);
-          last = attempt(job, code, target, original, fileName, prompt, "r" + round + "-a" + a, log, options);
+          last =
+              attempt(
+                  job,
+                  code,
+                  target,
+                  original,
+                  fileName,
+                  prompt,
+                  "r" + round + "-a" + a,
+                  log,
+                  options);
           if (last.ok()) {
             succeeded = true;
             break ladder;
@@ -164,7 +180,10 @@ public final class JobRunner {
           JobOutcome.Status.MODEL_UNAVAILABLE,
           n,
           log.dir(),
-          "model call failed: " + modelError.getMessage() + ". target restored. see " + log.display(),
+          "model call failed: "
+              + modelError.getMessage()
+              + ". target restored. see "
+              + log.display(),
           null);
     }
     if (!succeeded) {
@@ -185,7 +204,11 @@ public final class JobRunner {
     }
     if (!options.compile()) {
       return new JobOutcome(
-          JobOutcome.Status.COMPILED, n, log.dir(), "spliced (compile skipped). see " + log.display(), null);
+          JobOutcome.Status.COMPILED,
+          n,
+          log.dir(),
+          "spliced (compile skipped). see " + log.display(),
+          null);
     }
 
     if (!jobPrompt.equals(firstPrompt)) {
@@ -194,16 +217,24 @@ public final class JobRunner {
         repo.write(orig, firstPrompt);
       }
       repo.write(promptFile, jobPrompt);
-      say("repaired prompt saved over %s (original: %s)", repo.relative(promptFile), repo.relative(orig));
+      say(
+          "repaired prompt saved over %s (original: %s)",
+          repo.relative(promptFile), repo.relative(orig));
     }
 
     String compiled = "compiled after " + n + " attempt(s): " + job.target();
     if (!options.autoCommit()) {
       return new JobOutcome(JobOutcome.Status.COMPILED, n, log.dir(), compiled, null);
     }
-    String id = name.replaceFirst("^\\d+-", "");
+    String id = commitId(fileName, job.signature(), name);
     String subject =
-        "codegen: " + id + " (" + n + " attempt(s)" + (n > options.codeAttempts() ? ", repaired" : "") + ")";
+        "codegen: "
+            + id
+            + " ("
+            + n
+            + " attempt(s)"
+            + (n > options.codeAttempts() ? ", repaired" : "")
+            + ")";
     String body =
         "Generated by codegen. Plan: "
             + jobFile.toAbsolutePath().getParent().getFileName()
@@ -213,7 +244,8 @@ public final class JobRunner {
             + log.display();
     try {
       String sha = vcs.commitOnly(target, subject, body);
-      return new JobOutcome(JobOutcome.Status.COMPILED, n, log.dir(), compiled + ", committed " + sha, sha);
+      return new JobOutcome(
+          JobOutcome.Status.COMPILED, n, log.dir(), compiled + ", committed " + sha, sha);
     } catch (VcsException e) {
       return new JobOutcome(
           JobOutcome.Status.COMMIT_FAILED,
@@ -282,6 +314,19 @@ public final class JobRunner {
     }
     return revised;
   }
+
+  /**
+   * "PlanPrompts.planner" from the target file name and signature, since plan job numbers repeat
+   * across plans. Falls back to the job name without its number.
+   */
+  static String commitId(String fileName, String signature, String jobName) {
+    Matcher method = METHOD_NAME.matcher(signature);
+    String className =
+        fileName.endsWith(".java") ? fileName.substring(0, fileName.length() - 5) : fileName;
+    return method.find() ? className + "." + method.group(1) : jobName.replaceFirst("^\\d+-", "");
+  }
+
+  private static final Pattern METHOD_NAME = Pattern.compile("(\\w+)\\s*\\(");
 
   /** "01-findByContact.job.json" becomes "01-findByContact". */
   static String jobName(Path jobFile) {

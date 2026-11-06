@@ -15,7 +15,8 @@ import java.util.List;
  * @param prompt repo-relative path of the prompt file
  * @param imports fully qualified imports to add; never null
  */
-public record Job(String stage, String target, String signature, String prompt, List<String> imports) {
+public record Job(
+    String stage, String target, String signature, String prompt, List<String> imports) {
 
   public Job {
     imports = imports == null ? List.of() : List.copyOf(imports);

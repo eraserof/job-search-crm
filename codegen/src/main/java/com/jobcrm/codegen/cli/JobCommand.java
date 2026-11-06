@@ -37,7 +37,8 @@ final class JobCommand implements Callable<Integer> {
     Tool tool = Tool.create();
     try (RunLock lock = RunLock.acquire(tool.lockFile(), "job " + jobFile)) {
       Path file = tool.repo.resolve(jobFile);
-      JobOutcome outcome = runOne(tool, file, options(tool, codeAttempts, repairRounds, noCompile, noAutoCommit));
+      JobOutcome outcome =
+          runOne(tool, file, options(tool, codeAttempts, repairRounds, noCompile, noAutoCommit));
       return outcome.status().exitCode();
     } catch (LlmException e) {
       tool.out.println("MODEL UNAVAILABLE: " + e.getMessage());
@@ -47,7 +48,11 @@ final class JobCommand implements Callable<Integer> {
 
   /** Applies CLI overrides on top of models.json "escalation". */
   static JobOptions options(
-      Tool tool, Integer codeAttempts, Integer repairRounds, boolean noCompile, boolean noAutoCommit) {
+      Tool tool,
+      Integer codeAttempts,
+      Integer repairRounds,
+      boolean noCompile,
+      boolean noAutoCommit) {
     Escalation e = tool.config.effectiveEscalation();
     return new JobOptions(
         codeAttempts != null ? codeAttempts : e.codeAttempts(),

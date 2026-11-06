@@ -7,7 +7,8 @@ import picocli.CommandLine.Command;
 @Command(
     name = "codegen",
     mixinStandardHelpOptions = true,
-    description = "Local plan/code pipeline: the big model plans, the small model fills method bodies.",
+    description =
+        "Local plan/code pipeline: the big model plans, the small model fills method bodies.",
     subcommands = {ModelsCommand.class, PlanCommand.class, RunCommand.class, JobCommand.class})
 public final class Commands implements Runnable {
 

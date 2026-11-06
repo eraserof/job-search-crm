@@ -32,8 +32,8 @@ import java.util.stream.Stream;
  *   <li><b>firstTokenTimeout</b>, measured from sending the request until the first {@code data:}
  *       line. This covers waiting behind other requests (parallel = 1 means queueing) and model
  *       loading. Blank keep-alive lines do not extend it.
- *   <li><b>idleTimeout</b>, the longest allowed gap between lines once data has started.
- *       Reasoning deltas count as activity, so a thinking model is not mistaken for a stall.
+ *   <li><b>idleTimeout</b>, the longest allowed gap between lines once data has started. Reasoning
+ *       deltas count as activity, so a thinking model is not mistaken for a stall.
  * </ul>
  */
 public final class OpenAiChatClient implements ChatClient {

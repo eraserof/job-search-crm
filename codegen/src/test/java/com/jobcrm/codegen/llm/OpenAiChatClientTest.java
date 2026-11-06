@@ -51,7 +51,8 @@ class OpenAiChatClientTest {
           ex.close();
         });
 
-    String text = client().complete(stage(Duration.ofSeconds(5), Duration.ofSeconds(5)), "hi", null);
+    String text =
+        client().complete(stage(Duration.ofSeconds(5), Duration.ofSeconds(5)), "hi", null);
 
     assertThat(text).isEqualTo("Hello");
     assertThat(lastRequest.get()).contains("\"stream\":true").contains("\"content\":\"hi\"");
@@ -68,7 +69,8 @@ class OpenAiChatClientTest {
         });
 
     assertThatThrownBy(
-            () -> client().complete(stage(Duration.ofSeconds(5), Duration.ofMillis(300)), "hi", null))
+            () ->
+                client().complete(stage(Duration.ofSeconds(5), Duration.ofMillis(300)), "hi", null))
         .isInstanceOfSatisfying(LlmException.class, e -> assertThat(e.retryable()).isTrue())
         .hasMessageContaining("stalled");
   }
@@ -82,7 +84,8 @@ class OpenAiChatClientTest {
         });
 
     assertThatThrownBy(
-            () -> client().complete(stage(Duration.ofMillis(300), Duration.ofSeconds(5)), "hi", null))
+            () ->
+                client().complete(stage(Duration.ofMillis(300), Duration.ofSeconds(5)), "hi", null))
         .isInstanceOfSatisfying(LlmException.class, e -> assertThat(e.retryable()).isTrue())
         .hasMessageContaining("busy");
   }
@@ -101,7 +104,8 @@ class OpenAiChatClientTest {
         });
 
     assertThatThrownBy(
-            () -> client().complete(stage(Duration.ofMillis(500), Duration.ofSeconds(5)), "hi", null))
+            () ->
+                client().complete(stage(Duration.ofMillis(500), Duration.ofSeconds(5)), "hi", null))
         .isInstanceOfSatisfying(LlmException.class, e -> assertThat(e.retryable()).isTrue())
         .hasMessageContaining("no tokens");
   }
@@ -138,7 +142,8 @@ class OpenAiChatClientTest {
         });
 
     assertThatThrownBy(
-            () -> client().complete(stage(Duration.ofSeconds(5), Duration.ofSeconds(5)), "hi", null))
+            () ->
+                client().complete(stage(Duration.ofSeconds(5), Duration.ofSeconds(5)), "hi", null))
         .isInstanceOfSatisfying(LlmException.class, e -> assertThat(e.retryable()).isFalse())
         .hasMessageContaining("model crashed");
   }
@@ -167,7 +172,8 @@ class OpenAiChatClientTest {
 
   private ResolvedStage stage(Duration firstToken, Duration idle) {
     String base = "http://127.0.0.1:" + server.getAddress().getPort() + "/v1";
-    return new ResolvedStage("code", "fake", new Platform("ollama", base, null), "m", 0.2, firstToken, idle);
+    return new ResolvedStage(
+        "code", "fake", new Platform("ollama", base, null), "m", 0.2, firstToken, idle);
   }
 
   private void start(HttpHandler handler) throws IOException {

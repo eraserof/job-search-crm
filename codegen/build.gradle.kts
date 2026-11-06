@@ -4,6 +4,7 @@
 plugins {
     java
     application
+    id("com.diffplug.spotless")
 }
 
 java {
@@ -39,4 +40,25 @@ tasks.withType<Test> {
         showExceptions = true
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
+}
+
+// Same formatter as the app. Google Java Format always removes unused imports, and the stubs
+// import types their future bodies need, so files that still contain a TODO(codegen) stub are
+// skipped until the pipeline has filled them.
+spotless {
+    java {
+        target(
+            fileTree("src") {
+                include("**/*.java")
+            }.filter { !it.readText().contains("TODO(codegen)") },
+        )
+        googleJavaFormat("1.28.0")
+        importOrder()
+        removeUnusedImports()
+        endWithNewline()
+    }
+}
+
+tasks.named("check") {
+    dependsOn("spotlessCheck")
 }

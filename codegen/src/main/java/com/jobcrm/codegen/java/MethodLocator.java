@@ -18,8 +18,8 @@ import java.util.regex.Pattern;
  * Finds a method's body in Java source by signature, using JavaParser rather than brace matching.
  *
  * <p>A signature such as {@code "public List<Opportunity> findByContact(ContactId contact)"}
- * matches by <b>method name and parameter types</b> only. Modifiers, annotations, return type,
- * and parameter names are ignored, so overloads are told apart and cosmetic differences are not.
+ * matches by <b>method name and parameter types</b> only. Modifiers, annotations, return type, and
+ * parameter names are ignored, so overloads are told apart and cosmetic differences are not.
  * Package qualifiers are ignored too ({@code java.util.List} equals {@code List}). Only methods
  * with a body count, so interface declarations never match. Constructors are not supported.
  */
@@ -126,7 +126,8 @@ public final class MethodLocator {
   private record MethodKey(String name, List<String> paramTypes) {}
 
   private static MethodKey keyOf(String signature) {
-    ParseResult<MethodDeclaration> parsed = parser().parseMethodDeclaration(signature.strip() + " {}");
+    ParseResult<MethodDeclaration> parsed =
+        parser().parseMethodDeclaration(signature.strip() + " {}");
     if (!parsed.isSuccessful() || parsed.getResult().isEmpty()) {
       throw new IllegalArgumentException("not a method signature: " + signature);
     }

@@ -66,7 +66,9 @@ class JobRunnerTest {
   void files() throws Exception {
     repo = new Repo(root);
     repo.write(root.resolve(TARGET), ORIGINAL);
-    repo.write(root.resolve("prompts/a.prompt.txt"), "implement answer\n=== Contract ===\nImplement:  int answer()");
+    repo.write(
+        root.resolve("prompts/a.prompt.txt"),
+        "implement answer\n=== Contract ===\nImplement:  int answer()");
   }
 
   // ---------- refusals: nothing is touched ----------
@@ -95,7 +97,10 @@ class JobRunnerTest {
 
   @Test
   void refusesWhenTheSignatureIsNotInTheTarget() {
-    JobOutcome outcome = run(new Job("code", TARGET, "int missing()", "prompts/a.prompt.txt", List.of()), options(2, 0, false));
+    JobOutcome outcome =
+        run(
+            new Job("code", TARGET, "int missing()", "prompts/a.prompt.txt", List.of()),
+            options(2, 0, false));
 
     assertThat(outcome.status()).isEqualTo(JobOutcome.Status.REFUSED);
     assertThat(outcome.message()).contains("found 0 times");
@@ -131,7 +136,8 @@ class JobRunnerTest {
   // ---------- the full ladder (needs the generated helpers) ----------
 
   @Test
-  @Disabled("enable once codegen fills BodyExtractor, BodySyntax, CompilerErrors, Prompts, RepairParser")
+  @Disabled(
+      "enable once codegen fills BodyExtractor, BodySyntax, CompilerErrors, Prompts, RepairParser")
   void compilesOnTheFirstTryAndCommitsOnlyTheTarget() throws Exception {
     replies.add("```java\nreturn 42;\n```");
     compiles.add(true);
@@ -140,11 +146,12 @@ class JobRunnerTest {
 
     assertThat(outcome.status()).isEqualTo(JobOutcome.Status.COMPILED);
     assertThat(Files.readString(root.resolve(TARGET))).contains("return 42;").doesNotContain("```");
-    assertThat(vcs.commits).containsExactly("codegen: a (1 attempt(s))");
+    assertThat(vcs.commits).containsExactly("codegen: A.answer (1 attempt(s))");
   }
 
   @Test
-  @Disabled("enable once codegen fills BodyExtractor, BodySyntax, CompilerErrors, Prompts, RepairParser")
+  @Disabled(
+      "enable once codegen fills BodyExtractor, BodySyntax, CompilerErrors, Prompts, RepairParser")
   void escalatesToRepairThenSavesTheRepairedPrompt() throws Exception {
     replies.add("return x;");
     replies.add("return x;");
@@ -164,7 +171,7 @@ class JobRunnerTest {
     assertThat(prompts.get(2)).startsWith("repair: ");
     assertThat(root.resolve("prompts/a.prompt.txt")).content().contains("the literal 42");
     assertThat(root.resolve("prompts/a.prompt.txt.orig")).exists();
-    assertThat(vcs.commits).containsExactly("codegen: a (3 attempt(s), repaired)");
+    assertThat(vcs.commits).containsExactly("codegen: A.answer (3 attempt(s), repaired)");
   }
 
   // ---------- helpers ----------
@@ -188,8 +195,13 @@ class JobRunnerTest {
 
   private static ResolvedStage stage(String name) {
     return new ResolvedStage(
-        name, "fake", new Platform("ollama", "http://fake/v1", null), name + "-model", 0.2,
-        Duration.ofSeconds(1), Duration.ofSeconds(1));
+        name,
+        "fake",
+        new Platform("ollama", "http://fake/v1", null),
+        name + "-model",
+        0.2,
+        Duration.ofSeconds(1),
+        Duration.ofSeconds(1));
   }
 
   private void assertUntouched() {

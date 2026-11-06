@@ -57,7 +57,8 @@ class MethodLocatorTest {
 
   @Test
   void ignoresModifiersReturnTypeParameterNamesAndPackageQualifiers() {
-    assertThat(MethodLocator.find(SOURCE, "private Object find(java.lang.String other)")).isPresent();
+    assertThat(MethodLocator.find(SOURCE, "private Object find(java.lang.String other)"))
+        .isPresent();
   }
 
   @Test
