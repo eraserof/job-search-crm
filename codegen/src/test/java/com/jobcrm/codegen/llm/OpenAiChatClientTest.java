@@ -59,6 +59,24 @@ class OpenAiChatClientTest {
   }
 
   @Test
+  void fallsBackToReasoningWhenContentIsEmpty() throws Exception {
+    // LM Studio's reasoning split can misfire and put the whole answer in reasoning_content.
+    start(
+        ex -> {
+          stream(ex);
+          send(ex, event("{\"choices\":[{\"delta\":{\"reasoning_content\":\"=== REVISED\"}}]}"));
+          send(ex, event("{\"choices\":[{\"delta\":{\"reasoning_content\":\" PROMPT ===\"}}]}"));
+          send(ex, "data: [DONE]\n\n");
+          ex.close();
+        });
+
+    String text =
+        client().complete(stage(Duration.ofSeconds(5), Duration.ofSeconds(5)), "hi", null);
+
+    assertThat(text).isEqualTo("=== REVISED PROMPT ===");
+  }
+
+  @Test
   void aStallAfterDataStartedIsRetryable() throws Exception {
     start(
         ex -> {

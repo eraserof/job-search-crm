@@ -84,7 +84,14 @@ function Invoke-Planner([string]$prompt) {
   $r = Invoke-RestMethod -Uri ($platform.baseUrl.TrimEnd('/') + '/chat/completions') -Method Post `
     -Headers $headers -Body $bytes -ContentType 'application/json; charset=utf-8' `
     -TimeoutSec $stage.timeoutSec
-  return [string]$r.choices[0].message.content
+  # LM Studio's reasoning split can misfire and leave content empty: fall back to reasoning_content.
+  $message = $r.choices[0].message
+  $content = [string]$message.content
+  if (-not $content.Trim() -and ([string]$message.reasoning_content).Trim()) {
+    Write-Host "note: reply content was empty; using reasoning_content instead"
+    return [string]$message.reasoning_content
+  }
+  return $content
 }
 
 # Pull the JSON object out of a reply that may contain <think> blocks or markdown fences.

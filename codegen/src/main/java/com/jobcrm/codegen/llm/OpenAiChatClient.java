@@ -81,6 +81,17 @@ public final class OpenAiChatClient implements ChatClient {
     return readStream(stage, response.body(), startNanos);
   }
 
+  /**
+   * The content, or the reasoning when content is blank. LM Studio's reasoning split can misfire
+   * and put the whole reply in reasoning_content; callers' parsing (last marked block, leading
+   * think block) copes with reasoning mixed into the text.
+   */
+  private static String answer(StringBuilder content, StringBuilder reasoning) {
+    return content.toString().isBlank() && !reasoning.toString().isBlank()
+        ? reasoning.toString()
+        : content.toString();
+  }
+
   private HttpRequest buildRequest(ResolvedStage stage, String prompt, JsonNode responseFormat)
       throws LlmException {
     ObjectNode body = json.createObjectNode();
@@ -153,6 +164,7 @@ public final class OpenAiChatClient implements ChatClient {
                 });
 
     StringBuilder out = new StringBuilder();
+    StringBuilder reasoning = new StringBuilder();
     boolean sawData = false;
     try {
       while (true) {
@@ -173,7 +185,7 @@ public final class OpenAiChatClient implements ChatClient {
                       .formatted(stage.platformName(), stage.firstTokenTimeout().toSeconds()));
         }
         if (item == END) {
-          return out.toString();
+          return answer(out, reasoning);
         }
         if (item instanceof RuntimeException e) {
           throw LlmException.retryable("stream from " + stage.platformName() + " broke: " + e, e);
@@ -184,13 +196,14 @@ public final class OpenAiChatClient implements ChatClient {
         }
         sawData = true;
         if (SseParser.isDone(line)) {
-          return out.toString();
+          return answer(out, reasoning);
         }
         Optional<String> error = SseParser.error(line, json);
         if (error.isPresent()) {
           throw LlmException.fatal(stage.platformName() + " reported: " + error.get());
         }
         SseParser.content(line, json).ifPresent(out::append);
+        SseParser.reasoning(line, json).ifPresent(reasoning::append);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

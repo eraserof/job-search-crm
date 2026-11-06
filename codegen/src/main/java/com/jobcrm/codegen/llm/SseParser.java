@@ -48,6 +48,24 @@ public final class SseParser {
     return content.isTextual() ? Optional.of(content.asText()) : Optional.empty();
   }
 
+  /**
+   * The text in {@code choices[0].delta.reasoning_content} (or {@code
+   * choices[0].message.reasoning_content}). Kept apart from content; used only as a fallback when a
+   * server's reasoning split misfires and the answer ends up in this field.
+   */
+  public static Optional<String> reasoning(String line, ObjectMapper json) {
+    JsonNode event = parse(line, json);
+    if (event == null) {
+      return Optional.empty();
+    }
+    JsonNode choice = event.path("choices").path(0);
+    JsonNode text = choice.path("delta").path("reasoning_content");
+    if (!text.isTextual()) {
+      text = choice.path("message").path("reasoning_content");
+    }
+    return text.isTextual() ? Optional.of(text.asText()) : Optional.empty();
+  }
+
   /** The server's message when the event is an error object ({@code {"error": ...}}). */
   public static Optional<String> error(String line, ObjectMapper json) {
     JsonNode event = parse(line, json);

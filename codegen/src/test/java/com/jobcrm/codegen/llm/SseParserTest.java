@@ -30,6 +30,20 @@ class SseParserTest {
   }
 
   @Test
+  void readsReasoningSeparately() {
+    assertThat(
+            SseParser.reasoning(
+                "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"hmm\"}}]}", json))
+        .contains("hmm");
+    assertThat(
+            SseParser.reasoning(
+                "data: {\"choices\":[{\"message\":{\"reasoning_content\":\"all\"}}]}", json))
+        .contains("all");
+    assertThat(SseParser.reasoning("data: {\"choices\":[{\"delta\":{\"content\":\"x\"}}]}", json))
+        .isEmpty();
+  }
+
+  @Test
   void recognisesDoneAndIgnoresNonDataAndMalformedLines() {
     assertThat(SseParser.isDone("data: [DONE]")).isTrue();
     assertThat(SseParser.isDone("data:[DONE]")).isTrue();

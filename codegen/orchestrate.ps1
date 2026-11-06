@@ -90,7 +90,20 @@ function Invoke-Model($cfg, [string]$prompt) {
   $r = Invoke-RestMethod -Uri ($cfg.baseUrl.TrimEnd('/') + '/chat/completions') -Method Post `
     -Headers (Get-Headers $cfg.platform) -Body $bytes `
     -ContentType 'application/json; charset=utf-8' -TimeoutSec $cfg.timeoutSec
-  return [string]$r.choices[0].message.content
+  return (Get-ReplyText $r.choices[0].message)
+}
+
+# LM Studio's reasoning split can misfire and put the whole reply in reasoning_content, leaving
+# content empty. Fall back to it; the callers' parsing (last block, leading <think>) copes with it.
+function Get-ReplyText($message) {
+  $content = [string]$message.content
+  if ($content.Trim()) { return $content }
+  $reasoning = [string]$message.reasoning_content
+  if ($reasoning.Trim()) {
+    Write-Host "note: reply content was empty; using reasoning_content instead"
+    return $reasoning
+  }
+  return $content
 }
 
 function Remove-Fences([string]$t) {
