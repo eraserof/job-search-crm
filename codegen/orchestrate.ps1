@@ -320,10 +320,17 @@ $problem
   $raw = Invoke-Model $rcfg $rp
   Write-Text "$runDir/repair-$round.prompt.txt" $rp
   Write-Text "$runDir/repair-$round.out.txt" $raw
-  $t = [regex]::Replace($raw, '(?s)<think>.*?</think>', '')
-  $m = [regex]::Match($t, '(?s)=== REVISED PROMPT ===\s*(.*?)\s*=== END ===')
-  if (-not $m.Success) { Write-Host "repair reply had no REVISED PROMPT block"; return $null }
-  $revised = $m.Groups[1].Value.Trim()
+  # Reasoning may leak into the reply (sometimes without an opening <think>) and often quotes the
+  # markers. "</think>" can also be DATA inside the answer (prompts about think-tag handling), so
+  # never cut at it: strip only a leading <think>...</think> and take the LAST block.
+  $t = $raw.TrimStart()
+  if ($t.StartsWith('<think>')) {
+    $close = $t.IndexOf('</think>')
+    if ($close -ge 0) { $t = $t.Substring($close + 8) }
+  }
+  $ms = [regex]::Matches($t, '(?s)=== REVISED PROMPT ===\s*(.*?)\s*=== END ===')
+  if ($ms.Count -eq 0) { Write-Host "repair reply had no REVISED PROMPT block"; return $null }
+  $revised = $ms[$ms.Count - 1].Groups[1].Value.Trim()
   # Guard: the revision must still be a job prompt for the same method.
   $sigPattern = (($job.signature.Trim() -split '\s+') | ForEach-Object { [regex]::Escape($_) }) -join '\s+'
   if ($revised -notmatch '=== Contract ===' -or $revised -notmatch $sigPattern) {

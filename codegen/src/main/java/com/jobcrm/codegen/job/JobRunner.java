@@ -11,6 +11,7 @@ import com.jobcrm.codegen.java.MethodLocator;
 import com.jobcrm.codegen.java.Splicer;
 import com.jobcrm.codegen.llm.ChatClient;
 import com.jobcrm.codegen.llm.LlmException;
+import com.jobcrm.codegen.llm.Reasoning;
 import com.jobcrm.codegen.vcs.Vcs;
 import com.jobcrm.codegen.vcs.VcsException;
 import java.io.PrintWriter;
@@ -272,7 +273,7 @@ public final class JobRunner {
     String raw = chat.complete(code, prompt, null);
     log.write(tag + ".out.txt", raw);
 
-    String cleaned = BodyExtractor.clean(raw);
+    String cleaned = BodyExtractor.clean(Reasoning.strip(raw));
     if (BodyExtractor.isClarification(cleaned)) {
       return Attempt.question(cleaned);
     }

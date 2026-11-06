@@ -89,7 +89,12 @@ function Invoke-Planner([string]$prompt) {
 
 # Pull the JSON object out of a reply that may contain <think> blocks or markdown fences.
 function Get-JsonText([string]$t) {
-  $t = [regex]::Replace($t, '(?s)<think>.*?</think>', '')
+  # Strip only a LEADING <think>...</think>: "</think>" can be data inside the plan's strings.
+  $t = $t.TrimStart()
+  if ($t.StartsWith('<think>')) {
+    $close = $t.IndexOf('</think>')
+    if ($close -ge 0) { $t = $t.Substring($close + 8) }
+  }
   $a = $t.IndexOf('{'); $b = $t.LastIndexOf('}')
   if ($a -lt 0 -or $b -le $a) { return $null }
   return $t.Substring($a, $b - $a + 1)

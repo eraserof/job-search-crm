@@ -9,6 +9,7 @@ import com.jobcrm.codegen.config.ResolvedStage;
 import com.jobcrm.codegen.job.RunLog;
 import com.jobcrm.codegen.llm.ChatClient;
 import com.jobcrm.codegen.llm.LlmException;
+import com.jobcrm.codegen.llm.Reasoning;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
@@ -65,7 +66,7 @@ public final class Planner {
       String raw = chat.complete(stage, prompt, responseFormat);
       log.write("attempt-" + attempt + ".out.txt", raw);
 
-      Optional<String> jsonText = PlanPrompts.extractJson(raw);
+      Optional<String> jsonText = PlanPrompts.extractJson(Reasoning.strip(raw));
       List<String> errors;
       Plan plan = null;
       if (jsonText.isEmpty()) {
