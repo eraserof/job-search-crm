@@ -1,5 +1,7 @@
 package com.jobcrm.codegen.config;
 
+import java.io.IOException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Path;
 import java.util.Map;
@@ -17,7 +19,16 @@ public record ModelsConfig(
    * missing or is not valid JSON. A null "platforms" or "stages" becomes an empty map.
    */
   public static ModelsConfig load(Path file, ObjectMapper json) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    try {
+        ModelsConfig loaded = json.readValue(file.toFile(), ModelsConfig.class);
+        return new ModelsConfig(
+            loaded.platforms() == null ? Map.<String, Platform>of() : loaded.platforms(),
+            loaded.stages() == null ? Map.<String, StageSpec>of() : loaded.stages(),
+            loaded.escalation()
+        );
+    } catch (IOException e) {
+        throw new ConfigException("cannot read " + file + ": " + e.getMessage(), e);
+    }
   }
 
   /**
