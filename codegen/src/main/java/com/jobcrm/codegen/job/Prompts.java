@@ -17,7 +17,7 @@ public final class Prompts {
    * </pre>
    */
   public static String hint(String jobPrompt, String errors) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    return jobPrompt + "\n\n=== Warning: an earlier attempt at this method failed to compile ===\n" + errors + "\n\nWrite the method so these errors cannot happen. Output ONLY the method implementation.";
   }
 
   /**
