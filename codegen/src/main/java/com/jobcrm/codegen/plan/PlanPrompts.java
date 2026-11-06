@@ -15,22 +15,20 @@ public final class PlanPrompts {
 
   /**
    * Every context file inlined, in order. For each path: {@code "\n----- FILE: " + path + "
-   * -----\n" + repo.read(repo.resolve(path)) + "\n"}. Concatenate them all; an empty list gives
-   * "".
+   * -----\n" + repo.read(repo.resolve(path)) + "\n"}. Concatenate them all; an empty list gives "".
    */
   public static String contextBlock(Repo repo, List<String> paths) {
     StringBuilder sb = new StringBuilder();
     for (String path : paths) {
-        sb.append("\n----- FILE: ").append(path).append("\n-----\n");
-        sb.append(repo.read(repo.resolve(path))).append("\n");
+      sb.append("\n----- FILE: ").append(path).append("\n-----\n");
+      sb.append(repo.read(repo.resolve(path))).append("\n");
     }
     return sb.toString();
   }
 
   /**
-   * The planner prompt: {@code template} with {@code "{{ASK}}"} replaced by {@code ask} and
-   * {@code "{{CONTEXT}}"} replaced by {@code context}, using literal {@code String.replace},
-   * ASK first.
+   * The planner prompt: {@code template} with {@code "{{ASK}}"} replaced by {@code ask} and {@code
+   * "{{CONTEXT}}"} replaced by {@code context}, using literal {@code String.replace}, ASK first.
    */
   public static String planner(String template, String ask, String context) {
     return template.replace("{{ASK}}", ask).replace("{{CONTEXT}}", context);
@@ -38,49 +36,52 @@ public final class PlanPrompts {
 
   /**
    * The re-ask after a rejected plan. Returns {@code basePrompt + "\n\n=== Your previous plan was
-   * rejected ===\n" + previousJson + "\n\n=== Validation errors ===\n" + String.join("\n",
-   * errors) + "\n\nReturn a corrected JSON plan only."}. A null previousJson is written as
-   * "(none)".
+   * rejected ===\n" + previousJson + "\n\n=== Validation errors ===\n" + String.join("\n", errors)
+   * + "\n\nReturn a corrected JSON plan only."}. A null previousJson is written as "(none)".
    */
   public static String retry(String basePrompt, String previousJson, List<String> errors) {
     String previous = previousJson == null ? "(none)" : previousJson;
-    return basePrompt + "\n\n=== Your previous plan was rejected ===\n" + previous + "\n\n=== Validation errors ===\n" + String.join("\n", errors) + "\n\nReturn a corrected JSON plan only.";
+    return basePrompt
+        + "\n\n=== Your previous plan was rejected ===\n"
+        + previous
+        + "\n\n=== Validation errors ===\n"
+        + String.join("\n", errors)
+        + "\n\nReturn a corrected JSON plan only.";
   }
 
   /**
    * The JSON object inside a reply that may contain {@code <think>} blocks or markdown fences.
    * Remove every {@code <think>...</think>} block with {@code THINK.matcher(raw).replaceAll("")}
-   * (the constant below), then take the text from
-   * the first '{' to the last '}' inclusive. Empty if there is no '{', or the last '}' comes
-   * before it.
+   * (the constant below), then take the text from the first '{' to the last '}' inclusive. Empty if
+   * there is no '{', or the last '}' comes before it.
    */
   public static Optional<String> extractJson(String raw) {
     String cleaned = PlanPrompts.THINK.matcher(raw).replaceAll("");
     int start = cleaned.indexOf('{');
     if (start == -1) {
-        return Optional.empty();
+      return Optional.empty();
     }
     int end = cleaned.lastIndexOf('}');
     if (end < start) {
-        return Optional.empty();
+      return Optional.empty();
     }
     return Optional.of(cleaned.substring(start, end + 1));
   }
 
   /**
-   * The OpenAI {@code response_format} that makes LM Studio enforce the plan shape: {@code
-   * {"type": "json_schema", "json_schema": {"name": "plan", "strict": true, "schema": <schema>}}},
-   * built with {@code json.createObjectNode()}, where {@code schema} is passed in (the parsed
+   * The OpenAI {@code response_format} that makes LM Studio enforce the plan shape: {@code {"type":
+   * "json_schema", "json_schema": {"name": "plan", "strict": true, "schema": <schema>}}}, built
+   * with {@code json.createObjectNode()}, where {@code schema} is passed in (the parsed
    * plan-schema.json resource).
    */
   public static ObjectNode responseFormat(ObjectMapper json, JsonNode schema) {
-  ObjectNode root = json.createObjectNode();
-  root.put("type", "json_schema");
-  ObjectNode spec = root.putObject("json_schema");
-  spec.put("name", "plan");
-  spec.put("strict", true);
-  spec.set("schema", schema);
-  return root;
+    ObjectNode root = json.createObjectNode();
+    root.put("type", "json_schema");
+    ObjectNode spec = root.putObject("json_schema");
+    spec.put("name", "plan");
+    spec.put("strict", true);
+    spec.set("schema", schema);
+    return root;
   }
 
   /**
@@ -91,10 +92,10 @@ public final class PlanPrompts {
   public static String rulesHeader(String template) {
     int idx = template.indexOf("\n=== The class");
     if (idx == -1 && template.startsWith("=== The class")) {
-        return "".stripTrailing();
+      return "".stripTrailing();
     }
     if (idx == -1) {
-        return template.stripTrailing();
+      return template.stripTrailing();
     }
     return template.substring(0, idx).stripTrailing();
   }
@@ -129,7 +130,7 @@ public final class PlanPrompts {
     sb.append("=== Contract ===\n");
     sb.append("Implement:  ").append(job.signature()).append("\n\n");
     for (String step : job.behavior()) {
-        sb.append("- ").append(step).append("\n");
+      sb.append("- ").append(step).append("\n");
     }
     return sb.toString();
   }
