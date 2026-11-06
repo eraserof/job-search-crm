@@ -19,7 +19,12 @@ public final class PlanPrompts {
    * "".
    */
   public static String contextBlock(Repo repo, List<String> paths) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    StringBuilder sb = new StringBuilder();
+    for (String path : paths) {
+        sb.append("\n----- FILE: ").append(path).append("\n-----\n");
+        sb.append(repo.read(repo.resolve(path))).append("\n");
+    }
+    return sb.toString();
   }
 
   /**
