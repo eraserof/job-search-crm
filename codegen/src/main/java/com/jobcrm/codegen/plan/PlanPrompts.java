@@ -74,7 +74,13 @@ public final class PlanPrompts {
    * plan-schema.json resource).
    */
   public static ObjectNode responseFormat(ObjectMapper json, JsonNode schema) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+  ObjectNode root = json.createObjectNode();
+  root.put("type", "json_schema");
+  ObjectNode spec = root.putObject("json_schema");
+  spec.put("name", "plan");
+  spec.put("strict", true);
+  spec.set("schema", schema);
+  return root;
   }
 
   /**
