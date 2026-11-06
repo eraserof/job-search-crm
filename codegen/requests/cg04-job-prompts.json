@@ -1,0 +1,7 @@
+{
+  "ask": "Implement ONLY the three static methods in codegen/src/main/java/com/jobcrm/codegen/job/Prompts.java: hint(String jobPrompt, String errors), problem(Attempt last), and repair(String template, String jobPrompt, Attempt last). Each javadoc gives the exact strings to build; carry those strings over character for character, including the \\n line breaks. Attempt is a record with boolean ok(), boolean clarification(), String body(), String errors(). repair must call problem(last) and use literal String.replace, replacing \"{{JOB_PROMPT}}\" before \"{{PROBLEM}}\". Order the jobs so problem comes before repair.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/job/Prompts.java",
+    "codegen/src/main/java/com/jobcrm/codegen/job/Attempt.java"
+  ]
+}

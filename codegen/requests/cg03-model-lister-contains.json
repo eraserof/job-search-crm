@@ -1,0 +1,6 @@
+{
+  "ask": "Implement ONLY ModelLister.contains(List<String> available, String model) in codegen/src/main/java/com/jobcrm/codegen/llm/ModelLister.java. Return true if available contains model, or contains model + \":latest\" (Ollama's implicit tag). Do not plan ModelLister.list or any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/llm/ModelLister.java"
+  ]
+}

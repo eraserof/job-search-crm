@@ -1,0 +1,6 @@
+{
+  "ask": "Implement ONLY these three static methods in codegen/src/main/java/com/jobcrm/codegen/plan/PlanPrompts.java, following their javadoc exactly: planner(String template, String ask, String context), retry(String basePrompt, String previousJson, List<String> errors), and rulesHeader(String template). planner uses literal String.replace, \"{{ASK}}\" first, then \"{{CONTEXT}}\". retry writes a null previousJson as \"(none)\" and joins errors with \"\\n\". rulesHeader returns everything before the first line that starts with \"=== The class\" (find it with template.indexOf(\"\\n=== The class\") or a check at index 0), with trailing whitespace removed via stripTrailing(); if the marker is missing, it returns template.stripTrailing(). Do not plan contextBlock, extractJson, responseFormat, codePrompt, or any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/plan/PlanPrompts.java"
+  ]
+}
