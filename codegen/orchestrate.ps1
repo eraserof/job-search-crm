@@ -175,7 +175,9 @@ function Invoke-Compile {
   # Full path + explicit working dir, so it works no matter who launched this script.
   $psi = New-Object System.Diagnostics.ProcessStartInfo
   $psi.FileName = 'cmd.exe'
-  $psi.Arguments = '/c ""' + (Join-Path $root 'gradlew.bat') + '" compileJava --console=plain -q 2>&1"'
+  # classes + testClasses: test sources must compile too, or a broken test body would be committed.
+  # Run from the root, these tasks cover every Gradle project (app and codegen subproject).
+  $psi.Arguments = '/c ""' + (Join-Path $root 'gradlew.bat') + '" classes testClasses --console=plain -q 2>&1"'
   $psi.WorkingDirectory = $root
   $psi.UseShellExecute = $false
   $psi.RedirectStandardOutput = $true
