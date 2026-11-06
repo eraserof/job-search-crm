@@ -52,6 +52,20 @@ public final class GradleCompiler implements Compiler {
    */
   @Override
   public CompileResult compile() {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    try {
+        Process process = new ProcessBuilder(command())
+                .directory(root.toFile())
+                .redirectErrorStream(true)
+                .start();
+        
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        int exitCode = process.waitFor();
+        return new CompileResult(exitCode == 0, output);
+    } catch (IOException e) {
+        throw new UncheckedIOException("cannot run gradle", e);
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return new CompileResult(false, "interrupted");
+    }
   }
 }
