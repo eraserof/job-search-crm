@@ -49,6 +49,9 @@ public final class ModelLister {
    * "coder"} matches {@code "coder:latest"}).
    */
   public static boolean contains(List<String> available, String model) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (available == null || model == null) {
+        return false;
+    }
+    return available.contains(model) || available.contains(model + ":latest");
   }
 }
