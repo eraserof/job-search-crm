@@ -64,3 +64,10 @@ application-secrets.yaml
 # Test fixtures that record real API responses may contain sensitive data;
 # recorded LLM fixtures are opt-in and reviewed before commit
 src/test/resources/fixtures/agents/**/*.private.json
+
+# llm-eval: local model-evaluation scratch (not part of the app)
+llm-eval/
+
+# codegen scratch: local-model drafts and raw outputs (keep TEMPLATE/README/gen.cmd)
+codegen/drafts/
+codegen/**/*.out.java

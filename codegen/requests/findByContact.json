@@ -1,0 +1,10 @@
+{
+  "ask": "Implement JdbcOpportunityRepository.findByContact(ContactId contact). It must return every opportunity linked to that contact through the opportunity_contact join table, ordered by created_at, mapped with the existing mapRow. Mirror the style of findByCompany. It currently returns null.",
+  "context": [
+    "src/main/java/com/jobcrm/infrastructure/persistence/JdbcOpportunityRepository.java",
+    "src/main/java/com/jobcrm/infrastructure/persistence/JdbcSupport.java",
+    "src/main/java/com/jobcrm/core/domain/opportunity/OpportunityRepository.java",
+    "src/main/java/com/jobcrm/core/domain/contact/ContactId.java",
+    "src/main/resources/db/migration/V1__init.sql"
+  ]
+}

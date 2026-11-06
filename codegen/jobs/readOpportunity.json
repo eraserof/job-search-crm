@@ -1,0 +1,7 @@
+{
+  "stage": "code",
+  "target": "src/main/java/com/jobcrm/agentic/application/ReadOpportunityTool.java",
+  "signature": "public ToolResult execute(String argsJson, ToolContext ctx)",
+  "prompt": "codegen/drafts/readOpportunity.txt",
+  "imports": []
+}

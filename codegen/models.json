@@ -1,0 +1,38 @@
+{
+  "platforms": {
+    "local": {
+      "kind": "ollama",
+      "baseUrl": "http://localhost:11434/v1"
+    },
+    "brother": {
+      "kind": "lmstudio",
+      "baseUrl": "http://192.168.0.49:1234/v1",
+      "apiKeyEnv": "LMSTUDIO_API_TOKEN"
+    }
+  },
+  "stages": {
+    "plan": {
+      "platform": "brother",
+      "model": "qwen3.8-27b",
+      "temperature": 0.3,
+      "timeoutSec": 600
+    },
+    "code": {
+      "platform": "local",
+      "model": "coder-full-gpu-7b",
+      "temperature": 0.2,
+      "timeoutSec": 300
+    },
+    "repair": {
+      "platform": "brother",
+      "model": "qwen3.8-27b",
+      "temperature": 0.2,
+      "timeoutSec": 600
+    }
+  },
+  "escalation": {
+    "codeAttempts": 2,
+    "repairRounds": 1,
+    "repairMode": "prompt"
+  }
+}
