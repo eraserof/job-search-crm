@@ -1,5 +1,11 @@
 package com.jobcrm.codegen.java;
 
+import java.util.stream.Collectors;
+
+import java.util.regex.Pattern;
+
+import java.util.regex.Matcher;
+
 import java.util.Optional;
 
 /** Turns a raw code-model reply into a method body ready for {@link Splicer}. */
@@ -19,7 +25,13 @@ public final class BodyExtractor {
    * </ol>
    */
   public static String clean(String raw) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    Pattern pattern = Pattern.compile("</think>", Pattern.DOTALL);
+    Matcher matcher = pattern.matcher(raw);
+    String cleaned = matcher.replaceAll("");
+    return cleaned.lines()
+                  .filter(line -> !line.strip().startsWith("```"))
+                  .collect(Collectors.joining("\n"))
+                  .strip();
   }
 
   /**
