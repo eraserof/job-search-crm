@@ -24,6 +24,10 @@ public final class RepairParser {
    * </ol>
    */
   public static Optional<String> extract(String raw, String signature) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (raw == null || signature == null) {
+        return Optional.empty();
+    }
+    String cleaned = Pattern.compile("</think>", Pattern.DOTALL).matcher(raw).replaceAll("");
+    return Optional.of(cleaned);
   }
 }
