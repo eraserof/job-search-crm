@@ -31,6 +31,13 @@ public record RetryPolicy(List<Duration> delays) {
    * delays.
    */
   public Optional<Duration> delayAfter(int failuresSoFar) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (failuresSoFar < 1) {
+        return Optional.empty();
+    }
+    if (failuresSoFar > delays().size()) {
+        return Optional.empty();
+    }
+    int index = failuresSoFar - 1;
+    return Optional.of(delays().get(index));
   }
 }
