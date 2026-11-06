@@ -27,7 +27,12 @@ public final class GradleCompiler implements Compiler {
    * "gradlew.bat" is not found.
    */
   List<String> command() {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    boolean windows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+    if (windows) {
+        return List.of("cmd.exe", "/c", root.resolve("gradlew.bat").toString(), "classes", "testClasses", "--console=plain", "-q");
+    } else {
+        return List.of(root.resolve("gradlew").toString(), "classes", "testClasses", "--console=plain", "-q");
+    }
   }
 
   /**
