@@ -30,6 +30,25 @@ public final class CompilerErrors {
    * </ol>
    */
   public static String forFile(String output, String fileName) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+  java.util.regex.Pattern startPattern = java.util.regex.Pattern.compile(java.util.regex.Pattern.quote(fileName) + ":\\d+: error:");
+  java.util.regex.Pattern stopErrorWarningPattern = java.util.regex.Pattern.compile(":\\d+: (error|warning):");
+  java.util.regex.Pattern stopErrorsPattern = java.util.regex.Pattern.compile("^\\s*\\d+ errors?$");
+
+  String[] lines = output.split("\\R");
+  java.util.LinkedHashSet<String> blocks = new java.util.LinkedHashSet<>();
+
+  for (int i = 0; i < lines.length; i++) {
+    if (!startPattern.matcher(lines[i]).find()) continue;
+
+    int end = Math.min(lines.length, i + 5);
+    java.util.ArrayList<String> blockLines = new java.util.ArrayList<>();
+    for (int j = i; j < end; j++) {
+      if (j > i && (stopErrorWarningPattern.matcher(lines[j]).find() || stopErrorsPattern.matcher(lines[j]).find())) break;
+      blockLines.add(lines[j].strip());
+    }
+    blocks.add(String.join("\n", blockLines));
+  }
+
+  return blocks.isEmpty() ? output : String.join("\n", blocks);
   }
 }
