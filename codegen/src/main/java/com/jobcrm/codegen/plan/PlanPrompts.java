@@ -69,7 +69,14 @@ public final class PlanPrompts {
    * template with trailing whitespace removed.
    */
   public static String rulesHeader(String template) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    int idx = template.indexOf("\n=== The class");
+    if (idx == -1 && template.startsWith("=== The class")) {
+        return "".stripTrailing();
+    }
+    if (idx == -1) {
+        return template.stripTrailing();
+    }
+    return template.substring(0, idx).stripTrailing();
   }
 
   /**
