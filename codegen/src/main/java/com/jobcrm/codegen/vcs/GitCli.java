@@ -24,8 +24,8 @@ public final class GitCli implements Vcs {
    *       .start()}.
    *   <li>Read the output with {@code new String(process.getInputStream().readAllBytes(),
    *       StandardCharsets.UTF_8)} BEFORE {@code process.waitFor()}.
-   *   <li>Non-zero exit code: throw {@code new VcsException("git " + String.join(" ", args) + "
-   *       failed: " + output.strip())}.
+   *   <li>Non-zero exit code: build {@code String cmd = String.join(" ", args);} and throw {@code
+   *       new VcsException("git " + cmd + " failed: " + output.strip())}.
    *   <li>Return {@code output.strip()}.
    *   <li>IOException: throw {@code new VcsException("cannot run git", e)}. InterruptedException:
    *       re-set the interrupt flag and throw {@code new VcsException("interrupted", e)}.

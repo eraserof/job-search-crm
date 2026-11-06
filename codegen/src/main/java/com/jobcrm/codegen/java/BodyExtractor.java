@@ -25,7 +25,7 @@ public final class BodyExtractor {
    * </ol>
    */
   public static String clean(String raw) {
-    Pattern pattern = Pattern.compile("</think>", Pattern.DOTALL);
+    Pattern pattern = Pattern.compile("<think>.*?</think>", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(raw);
     String cleaned = matcher.replaceAll("");
     return cleaned.lines()

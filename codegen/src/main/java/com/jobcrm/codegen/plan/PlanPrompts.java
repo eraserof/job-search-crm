@@ -14,13 +14,14 @@ public final class PlanPrompts {
   private PlanPrompts() {}
 
   /**
-   * Every context file inlined, in order. For each path: {@code "\n----- FILE: " + path + "
-   * -----\n" + repo.read(repo.resolve(path)) + "\n"}. Concatenate them all; an empty list gives "".
+   * Every context file inlined, in order. For each path, a one-line header {@code ----- FILE:
+   * <path> -----} preceded by a blank line, then the file text and a newline. An empty list gives
+   * "".
    */
   public static String contextBlock(Repo repo, List<String> paths) {
     StringBuilder sb = new StringBuilder();
     for (String path : paths) {
-      sb.append("\n----- FILE: ").append(path).append("\n-----\n");
+      sb.append("\n----- FILE: ").append(path).append(" -----\n");
       sb.append(repo.read(repo.resolve(path))).append("\n");
     }
     return sb.toString();
@@ -129,6 +130,7 @@ public final class PlanPrompts {
     sb.append(job.types()).append("\n\n");
     sb.append("=== Contract ===\n");
     sb.append("Implement:  ").append(job.signature()).append("\n\n");
+    sb.append("Behavior:\n");
     for (String step : job.behavior()) {
       sb.append("- ").append(step).append("\n");
     }
