@@ -26,7 +26,11 @@ public final class Prompts {
    * last attempt:\n" + last.body() + "\n\nCompiler errors:\n" + last.errors()}.
    */
   public static String problem(Attempt last) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (last.clarification()) {
+        return "The coder asked for clarification instead of writing code:\n" + last.errors();
+    } else {
+        return "Its last attempt:\n" + last.body() + "\n\nCompiler errors:\n" + last.errors();
+    }
   }
 
   /**
