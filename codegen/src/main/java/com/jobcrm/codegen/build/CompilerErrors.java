@@ -1,0 +1,35 @@
+package com.jobcrm.codegen.build;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
+
+/** Pulls the javac errors for one file out of Gradle's output, for the retry and repair prompts. */
+public final class CompilerErrors {
+
+  private CompilerErrors() {}
+
+  /**
+   * javac error blocks for {@code fileName} (e.g. "JdbcOpportunityRepository.java"), deduplicated
+   * and joined with "\n". Gradle prints each error twice (the second copy indented, in its failure
+   * summary), so blocks are compared after stripping each line.
+   *
+   * <ol>
+   *   <li>Split {@code output} into lines ({@code output.split("\\R")}).
+   *   <li>A block starts at a line matching {@code Pattern.quote(fileName) + ":\\d+: error:"}
+   *       (use {@code find()}, not {@code matches()}).
+   *   <li>The block is that line plus up to the next 4 lines, stopping early at a line that
+   *       matches {@code ":\\d+: (error|warning):"} or {@code "^\\s*\\d+ errors?$"}. Strip every
+   *       line in the block.
+   *   <li>Join the block's lines with "\n" and add it to a {@code LinkedHashSet<String>}, which
+   *       drops the duplicate copy and keeps the order.
+   *   <li>Return the set joined with "\n". If it is empty, return {@code output} unchanged so the
+   *       model still sees something.
+   * </ol>
+   */
+  public static String forFile(String output, String fileName) {
+    throw new UnsupportedOperationException("TODO(codegen)");
+  }
+}

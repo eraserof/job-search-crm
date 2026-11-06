@@ -116,3 +116,35 @@ Commit your stubs first, then run the plan. To drop one job's change, `git rever
 off with `-NoAutoCommit` on `run-plan.ps1` or `orchestrate.ps1`. `-NoCompile` also turns it off,
 since uncompiled code is never committed. Exit code 5 means the code compiled but the commit
 failed, for example because of a hook. The change is left in place, uncommitted.
+
+## Java port (in progress): `codegen` Gradle subproject
+
+The PowerShell scripts are being replaced by a Java tool under `codegen/src/`. It reads the same
+`models.json`, request, plan, and job files. Build and run it:
+
+```
+gradlew :codegen:installDist
+codegen\build\install\codegen\bin\codegen.bat models
+codegen\build\install\codegen\bin\codegen.bat plan codegen\requests\x.json
+codegen\build\install\codegen\bin\codegen.bat run <plan folder> [--from N] [--no-auto-commit]
+codegen\build\install\codegen\bin\codegen.bat job <job.json> [--code-attempts N] [--repair-rounds N] [--no-compile]
+```
+
+What it adds over the scripts:
+- **Streaming with two timeouts.** `firstTokenTimeoutSec` covers queueing and model loading,
+  and `idleTimeoutSec` covers a stall once tokens are flowing. Reasoning tokens count as
+  activity. The scripts' `timeoutSec` is ignored.
+- **Retry with backoff.** Waits 30, 60, then 120 seconds on busy, unreachable, or stalled
+  models. Bad requests fail right away.
+- **One run per checkout.** A run holds `codegen/drafts/.lock`. A crashed run's lock is taken
+  over automatically.
+- **JavaParser method lookup.** It matches by method name and parameter types instead of
+  regex, and syntax-checks the body before the slow Gradle compile.
+- Exit codes are the same as the scripts, plus `2` (refused or bad input) and `4` (model
+  unavailable).
+
+Status: the hand-written core is complete and tested. That covers method lookup and splicing,
+the streaming client, the escalation loop, the planner wiring, and the CLI. Methods whose body
+is `throw new UnsupportedOperationException("TODO(codegen)")` are stubs for the PowerShell
+pipeline to fill, and each one's javadoc is its contract. When they are filled, enable the two
+`@Disabled` tests in `JobRunnerTest`.

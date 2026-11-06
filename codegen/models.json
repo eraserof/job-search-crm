@@ -15,19 +15,25 @@
       "platform": "brother",
       "model": "qwen3.8-27b",
       "temperature": 0.3,
-      "timeoutSec": 600
+      "timeoutSec": 600,
+      "firstTokenTimeoutSec": 900,
+      "idleTimeoutSec": 180
     },
     "code": {
       "platform": "local",
       "model": "coder-full-gpu-7b",
       "temperature": 0.2,
-      "timeoutSec": 300
+      "timeoutSec": 300,
+      "firstTokenTimeoutSec": 600,
+      "idleTimeoutSec": 120
     },
     "repair": {
       "platform": "brother",
       "model": "qwen3.8-27b",
       "temperature": 0.2,
-      "timeoutSec": 600
+      "timeoutSec": 600,
+      "firstTokenTimeoutSec": 900,
+      "idleTimeoutSec": 180
     }
   },
   "escalation": {

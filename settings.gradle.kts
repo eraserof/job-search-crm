@@ -5,3 +5,7 @@ plugins {
 }
 
 rootProject.name = "job-search-crm"
+
+// Developer tooling: the local plan/code pipeline. Separate project so its dependencies and the
+// app's architecture rules never mix. Not part of the app's runtime.
+include("codegen")
