@@ -17,7 +17,7 @@ public record RetryPolicy(List<Duration> delays) {
 
   /** 30 s, 60 s, 120 s: three retries, about 3.5 minutes of waiting in total. */
   public static RetryPolicy standard() {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    return new RetryPolicy(List.of(Duration.ofSeconds(30), Duration.ofSeconds(60), Duration.ofSeconds(120)));
   }
 
   /** No retries at all: every failure is final. */
