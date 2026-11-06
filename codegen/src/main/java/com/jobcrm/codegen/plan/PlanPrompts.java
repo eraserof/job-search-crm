@@ -120,7 +120,18 @@ public final class PlanPrompts {
    * </pre>
    */
   public static String codePrompt(String rules, PlanJob job) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    StringBuilder sb = new StringBuilder();
+    sb.append(rules).append("\n\n");
+    sb.append("=== The class this method belongs to (relevant fields) ===\n");
+    sb.append(job.classContext()).append("\n\n");
+    sb.append("=== Types and methods you may use ===\n");
+    sb.append(job.types()).append("\n\n");
+    sb.append("=== Contract ===\n");
+    sb.append("Implement:  ").append(job.signature()).append("\n\n");
+    for (String step : job.behavior()) {
+        sb.append("- ").append(step).append("\n");
+    }
+    return sb.toString();
   }
 
   // The DOTALL think-block pattern used by extractJson.
