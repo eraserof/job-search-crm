@@ -30,6 +30,13 @@ public final class BodySyntax {
    * </ol>
    */
   public static Optional<String> firstError(String body) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    JavaParser parser = new JavaParser(new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21));
+    ParseResult<BlockStmt> result = parser.parseBlock("{\n" + body + "\n}");
+    if (result.isSuccessful()) {
+        return Optional.empty();
+    } else {
+        String message = result.getProblems().isEmpty() ? "unparsable body" : result.getProblems().get(0).getMessage();
+        return Optional.of("syntax error: " + message);
+    }
   }
 }
