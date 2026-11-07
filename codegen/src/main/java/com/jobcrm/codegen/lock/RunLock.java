@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.List;
 
 /**
  * One codegen run per checkout. Two runs at once would compete for the models, splice the same
@@ -57,7 +58,13 @@ public final class RunLock implements AutoCloseable {
    * first line is not a number. Never throws: IOException and NumberFormatException mean empty.
    */
   static Optional<Long> ownerPid(Path file) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    try {
+        List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
+        if (lines.isEmpty()) return Optional.empty();
+        return Optional.of(Long.parseLong(lines.get(0).strip()));
+    } catch (IOException | NumberFormatException e) {
+        return Optional.empty();
+    }
   }
 
   /** Deletes the lock file; an already-missing file is fine. */
