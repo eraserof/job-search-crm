@@ -52,7 +52,19 @@ public final class BodyExtractor {
    * cleaned} in that case too.
    */
   public static String extractBody(String cleaned, String signature) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    String wrapped = "class Wrapper__ {\n" + cleaned + "\n};";
+    MethodLocator.BodyRange range;
+    try {
+        Optional<MethodLocator.BodyRange> optionalRange = MethodLocator.find(wrapped, signature);
+        if (optionalRange.isPresent()) {
+            range = optionalRange.get();
+            String inner = wrapped.substring(range.open() + 1, range.close());
+            return inner.replaceAll("^[\\r\\n]+", "").replaceAll("[\\r\\n]+$", "");
+        }
+    } catch (IllegalArgumentException e) {
+        return cleaned;
+    }
+    return cleaned;
   }
 
   /** True if the reply asks a question instead of writing code (contains NEEDS_CLARIFICATION). */
