@@ -1,15 +1,18 @@
-# codegen — one-method body generator (local 7B)
+# codegen — local plan/code pipeline (27b plans, 7b fills method bodies)
 
-The daily loop that came out of the `llm-eval` study. The local model writes a single **method
-body**; you place it, let the IDE add imports, compile, review, and commit. The model never edits
-your files. One method at a time, not batches — batching only paid off on a rented, metered GPU.
+Developer tooling for this repo, not part of the app. The local 7b writes single **method bodies**;
+a bigger model plans the work, writes the contracts, and repairs prompts that fail. The tool does
+all the file work: it splices the body into the method, compiles, retries, escalates, restores the
+file on failure, and commits each method that compiles. Every model call is one fresh message, so
+each attempt and each stage starts from a clean context.
 
 ## Why body-only (not whole files)
 
-The study showed the 7B is reliable at filling a tightly-scoped method and unreliable at imports and
-whole-file edits (every `PASS*` in the eval was the model getting imports wrong and the harness
-re-adding them). So imports are the IDE's job, and file editing — if ever wanted — belongs on the
-$20 frontier tier, not the local 7B. (The `llm-eval` study itself is local-only and not in the repo.)
+The `llm-eval` study (local-only, not in the repo) showed the 7b is reliable at filling a
+tightly-scoped method and unreliable at imports and whole-file edits. So the model writes only the
+body, the tool adds imports, and anything you cannot specify exactly stays with a person or a
+frontier model. What makes the 7b reliable is the contract: exact steps, exact strings, exact
+calls. Batches whose contracts were precise came back right on the first try.
 
 ## One-time setup
 
@@ -17,147 +20,143 @@ $20 frontier tier, not the local 7B. (The `llm-eval` study itself is local-only 
 ollama create coder-full-gpu-7b -f codegen\Modelfile
 ```
 
-(That's the pinned config from the study: qwen2.5-coder:7b, num_ctx 8192, temperature 0.2, all
-layers requested on the GPU. The name must match `stages.code.model` in `models.json`.)
+That's the pinned config from the study: qwen2.5-coder:7b, num_ctx 8192, temperature 0.2, all
+layers requested on the GPU. The name must match `stages.code.model` in `models.json`.
+
+`models.json` names the **platforms** (servers, OpenAI-compatible: Ollama, LM Studio, llama.cpp)
+and the **stages** that use them (`plan`, `code`, `repair`). To use a model on another PC, set its
+platform's `baseUrl` and make that server listen on the LAN (trusted network only). For LM Studio,
+set the 27b's context length to about 49k and Max Concurrent Predictions to 1.
+
+## Running it: `cg.cmd`
+
+Run from the repo root:
+
+```
+.\cg models                                   list each platform's models (or why it's unreachable)
+.\cg plan codegen\requests\x.json             plan stage: request -> per-method jobs
+.\cg run <plan folder> [--from N] [--no-auto-commit]
+.\cg job <job.json> [--code-attempts N] [--repair-rounds N] [--no-compile] [--no-auto-commit]
+```
+
+`cg.cmd` rebuilds the tool first (`gradlew :codegen:installDist`, a few seconds when nothing
+changed), then runs the generated launcher `codegen\build\install\codegen\bin\codegen.bat`. The
+rebuild matters because the pipeline edits codegen's own sources, and the installed launcher is a
+snapshot. Type `.\cg`, not `cg`: this machine sets NoDefaultCurrentDirectoryInExePath, so cmd does
+not run programs from the current folder by bare name.
+
+Exit codes: `0` compiled, `1` failed (target restored), `2` refused or bad input, `3` the model
+asked a question even after repair, `4` model unavailable, `5` compiled but the commit failed
+(change left in place, uncommitted).
 
 ## The loop
 
-1. **Decompose** the feature yourself: write the method signatures and the wiring. This is the
-   judgment work and stays with you.
-2. **Write a prompt** for one method by copying `TEMPLATE.txt`. Fill in the class fields, the exact
-   signatures of every type the method uses (with record accessors), the method signature, and the
-   behavior. Put drafts in `codegen\drafts\` (gitignored).
-3. **Generate:** `codegen\gen.cmd codegen\drafts\myMethod.txt`
-4. **Review every line.** If it is wrong, fix by hand or add a clarifying line to the prompt and
-   regenerate. If it printed `NEEDS_CLARIFICATION: ...`, answer it in the prompt and rerun.
-5. **Paste** the body into the method. Run "organize imports" in your IDE.
-6. **Compile and test:** `gradlew.bat test` (or the relevant module).
-7. **Commit** that one method. Repeat.
+1. **Stubs.** The tool only fills methods that already exist. Write the signatures (or have the 27b
+   scaffold them, below) with the body `throw new UnsupportedOperationException("TODO(codegen)");`
+   and the contract as Javadoc. Commit them.
+2. **Request.** A file in `codegen\requests\`: `{ "ask": "...", "context": ["path", ...] }`. The
+   context files are inlined whole, so list the target plus the types its methods use. Name the
+   exact methods to fill; ask the planner to copy the contract's steps and strings exactly.
+3. **Plan:** `.\cg plan <request>`. The 27b returns one JSON job per method; each is checked against
+   the real file (target exists, signature found exactly once) before anything is written. A
+   rejected plan is re-asked once with the errors. On LM Studio the JSON shape is enforced with
+   `response_format`.
+4. **Review** `codegen\drafts\plans\<name>-<ts>\NN-*.prompt.txt` and edit if needed. This is the
+   cheapest place to fix a mistake.
+5. **Code:** `.\cg run <that folder>`. Jobs run in order and stop at the first failure; resume with
+   `--from NN`.
+6. **Format, test, review:** `gradlew :codegen:spotlessApply`, `gradlew test`, read the commits.
 
-## The house rules
+A job file (`NN-<id>.job.json`, or your own under `codegen\jobs\`) is:
 
-`TEMPLATE.txt` bakes in the fixes the study surfaced across every model — record accessors with
-`()`, mutable accumulator lists, acquire-before-try, Callable-vs-Runnable. Keep them; they prevented
-most of the compile/behaviour failures for free.
-
-## Notes
-
-- `*.out.java` raw outputs and the `drafts\` folder are gitignored (see `.gitignore`).
-- Pass a different model as the second arg if you want to compare, e.g. `gen.cmd prompt.txt llama3`.
-- This is the "cheap tier." Keep architecture, debugging, and anything you cannot fully specify on
-  the frontier tier.
-
-## Automated loop: `orchestrate.ps1`
-
-Same contract (model writes only the body), but the script does the file work:
-
-1. Put a stub (or existing) method in the target file with its final signature.
-2. Write the prompt as before, then a small job file in `codegen\jobs\`:
-   ```json
-   { "stage": "code", "target": "src/main/java/.../Foo.java",
-     "signature": "public ToolResult execute(String argsJson, ToolContext ctx)",
-     "prompt": "codegen/drafts/foo.txt", "imports": ["java.util.UUID"] }
-   ```
-3. Run: `powershell -NoProfile -ExecutionPolicy Bypass -File codegen\orchestrate.ps1 codegen\jobs\foo.json`
-
-It calls the stage's endpoint from `codegen\models.json`, which works with any OpenAI-compatible
-server (Ollama, llama.cpp, LM Studio). It then splices the body into the method, runs
-`gradlew compileJava`, and on failure retries with the compiler errors as a fresh prompt (default 2
-retries). If every attempt fails, it restores the file. Prompts, outputs, compiler logs, and
-`original.java.bak` are kept in `codegen\drafts\runs\<job>-<timestamp>\`. Flags: `-Retries N`, `-NoCompile`.
-
-Every call is a single fresh message, so each attempt and stage starts from a clean context. To use
-the 27b on another PC, set `stages.plan.baseUrl` and `model` in `models.json`, and have that
-Ollama listen on the LAN (`OLLAMA_HOST=0.0.0.0`, firewall port 11434, trusted network only).
-
-## Plan stage: `plan.ps1` + `run-plan.ps1`
-
-For a larger ask, the 27b writes the job prompts and the 7b fills them in.
-
-1. Write a request in `codegen\requests\`, e.g. `findByContact.json`:
-   `{ "ask": "...", "context": ["path/to/File.java", ...] }`. The context files are inlined
-   whole, so include the target file plus everything its methods touch.
-2. Plan: `powershell -NoProfile -ExecutionPolicy Bypass -File codegen\plan.ps1 codegen\requests\x.json`.
-   The 27b returns JSON jobs, one per existing method signature. Each job is checked against the
-   real file before anything is written. On LM Studio the JSON shape is enforced with `response_format`.
-3. Review `codegen\drafts\plans\<name>-<ts>\NN-*.prompt.txt` and edit them if needed.
-4. Code: `powershell -NoProfile -ExecutionPolicy Bypass -File codegen\run-plan.ps1 <that folder>`.
-   It runs the jobs in order and stops at the first failure. Resume with `-From NN`.
-
-Limits: the planner only fills methods that already exist, so add stubs first. On this machine
-`NoDefaultCurrentDirectoryInExePath=1`, so gradle is called by full path. In LM Studio, raise the
-27b's context length if large requests get truncated.
+```json
+{ "stage": "code", "target": "src/main/java/.../Foo.java",
+  "signature": "public ToolResult execute(String argsJson, ToolContext ctx)",
+  "prompt": "codegen/drafts/foo.txt", "imports": ["java.util.UUID"] }
+```
 
 ## Escalation (`escalation` in `models.json`)
 
 Each job goes up a ladder:
 
-1. `code` stage, `codeAttempts` times. Retries get the compiler errors as a warning, but not the
+1. `code` stage, `codeAttempts` times. Retries get the compiler errors as a warning, but never the
    failed code, because the 7b tends to copy back whatever it is shown.
 2. `repair` stage (the 27b) rewrites the job prompt to fix the root cause. It does not write code.
-3. `code` stage again with the revised prompt. This repeats for `repairRounds` rounds.
-4. If it still fails, the file is restored and the job stops. The file is also restored if the run
-   crashes or is cancelled.
+3. `code` stage again with the revised prompt, for `repairRounds` rounds.
+4. If it still fails, the target is restored and the job stops. The target is also restored if the
+   run crashes or is cancelled.
 
-If a repaired prompt succeeds, it is saved over the job's prompt file and the original is kept as
-`*.orig`. A `NEEDS_CLARIFICATION` reply also goes to repair, so the 27b can answer the question.
-The trail is in the run folder: `r<round>-a<attempt>.*` and `repair-<round>.*`. Override per run
-with `-CodeAttempts N -RepairRounds N` (`-RepairRounds 0` turns escalation off).
+Before the slow Gradle compile, the body is syntax-checked with JavaParser. If a repaired prompt
+succeeds, it replaces the job's prompt file and the first original is kept as `*.orig`. A
+`NEEDS_CLARIFICATION` reply also goes to repair, so the 27b can answer it. The trail is in
+`codegen\drafts\runs\<job>-<ts>\`: `r<round>-a<attempt>.*`, `repair-<round>.*`, and
+`original.java.bak`. Override per run with `--code-attempts N --repair-rounds N`
+(`--repair-rounds 0` turns escalation off).
 
 ## Auto-commit (default)
 
-Each job that compiles becomes its own commit, containing only its target file, with a message
-like `codegen: findByContact (3 attempt(s), repaired)`. A failed job leaves no commit. Before
-starting, a job refuses to run if:
-- the current branch is `main` or `master`, or
-- the target file has uncommitted changes, so a job's commit only ever holds the model's change.
+Each job that compiles becomes its own commit containing only its target file, with a subject like
+`codegen: PlanPrompts.planner (3 attempt(s), repaired)` and a body naming the plan, the model, and
+the run folder. A failed job leaves no commit. A job refuses to start if the branch is `main` or
+`master`, or if the target has uncommitted changes (so each commit holds only the model's change).
+To drop one job, `git revert <sha>`. `--no-auto-commit` turns it off; `--no-compile` does too, since
+uncompiled code is never committed. Don't commit by hand while a run is active.
 
-Commit your stubs first, then run the plan. To drop one job's change, `git revert <sha>`. Turn it
-off with `-NoAutoCommit` on `run-plan.ps1` or `orchestrate.ps1`. `-NoCompile` also turns it off,
-since uncompiled code is never committed. Exit code 5 means the code compiled but the commit
-failed, for example because of a hook. The change is left in place, uncommitted.
+## Model calls
 
-## Java port (in progress): `codegen` Gradle subproject
+- **Streaming with two timeouts.** `firstTokenTimeoutSec` covers queueing and model loading;
+  `idleTimeoutSec` covers a stall once tokens flow. Reasoning tokens count as activity.
+- **Retry with backoff.** 30, 60, then 120 seconds on busy, unreachable, or stalled models; bad
+  requests fail right away.
+- **Reasoning.** Only a reply that starts with `<think>` is stripped, and marker parsing takes the
+  last block: reasoning that leaks into `content` often quotes the markers, and `</think>` can be
+  data. If `content` is empty, `reasoning_content` is used instead.
+- **One run per checkout.** A run holds `codegen/drafts/.lock`; a crashed run's lock is taken over.
 
-The PowerShell scripts are being replaced by a Java tool under `codegen/src/`. It reads the same
-`models.json`, request, plan, and job files. Run it from the repo root with `cg.cmd`, which
-rebuilds the tool first (`gradlew :codegen:installDist`, a few seconds when nothing changed) and
-then calls the generated launcher `codegen\build\install\codegen\bin\codegen.bat`. The rebuild
-matters because the pipeline edits codegen's own sources, and the installed launcher is a
-snapshot. Type `.\cg`, not `cg`: this machine sets NoDefaultCurrentDirectoryInExePath, so cmd does
-not run programs from the current folder by bare name.
+## Which JDK runs what
 
-**Which JDK runs what.** You do not need to set `JAVA_HOME` for this repo. Gradle runs its daemon
-on a pinned JDK 25 (`gradle/gradle-daemon-jvm.properties`), and `gradle.properties` turns off
-JDK auto-detection, so the daemon and the compile toolchain use only JDKs Gradle provisioned under
-`~/.gradle/jdks`. `cg.cmd` runs the tool on that same JDK (recorded in
-`codegen\build\install\codegen\java-home.txt`). This matters because google-java-format (Spotless)
-works against the compiler internals of whatever JDK runs Gradle: it failed with
-`NoSuchFieldError ... endPositions` on JDK 21, on JDK 27, and on a half-updated IDE-bundled JDK 25.
-After changing these files, run `gradlew --stop` once so no old daemon is reused.
+You don't need to set `JAVA_HOME` for this repo. Gradle runs its daemon on a pinned JDK 25
+(`gradle/gradle-daemon-jvm.properties`), and `gradle.properties` turns off JDK auto-detection, so
+the daemon and the compile toolchain use only JDKs Gradle provisioned under `~/.gradle/jdks`.
+`cg.cmd` runs the tool on that same JDK (recorded in `codegen\build\install\codegen\java-home.txt`).
+This matters because google-java-format (Spotless) works against the compiler internals of whatever
+JDK runs Gradle: it failed with `NoSuchFieldError ... endPositions` on JDK 21, on JDK 27, and on a
+half-updated IDE-bundled JDK 25. After changing these files, run `gradlew --stop` once.
 
-```
-.\cg models
-.\cg plan codegen\requests\x.json
-.\cg run <plan folder> [--from N] [--no-auto-commit]
-.\cg job <job.json> [--code-attempts N] [--repair-rounds N] [--no-compile]
-```
+## Writing contracts (lessons from the batches)
 
-What it adds over the scripts:
-- **Streaming with two timeouts.** `firstTokenTimeoutSec` covers queueing and model loading,
-  and `idleTimeoutSec` covers a stall once tokens are flowing. Reasoning tokens count as
-  activity. The scripts' `timeoutSec` is ignored.
-- **Retry with backoff.** Waits 30, 60, then 120 seconds on busy, unreachable, or stalled
-  models. Bad requests fail right away.
-- **One run per checkout.** A run holds `codegen/drafts/.lock`. A crashed run's lock is taken
-  over automatically.
-- **JavaParser method lookup.** It matches by method name and parameter types instead of
-  regex, and syntax-checks the body before the slow Gradle compile.
-- Exit codes are the same as the scripts, plus `2` (refused or bad input) and `4` (model
-  unavailable).
+- Give exact calls with full signatures, not descriptions: `Files.readAllLines(file, UTF_8)`.
+- Put every string, regex, and format literal on one line. Never let a quoted string wrap across
+  Javadoc lines: the 7b copies the line break into the string.
+- Give the exact exception type and message for every edge case.
+- Pass lambdas inline; qualify nested types (`Outer.Inner`).
+- Compiling is not correctness: of 21 methods filled from early contracts, 4 compiled and were
+  wrong. Write tests for each batch.
 
-Status: the hand-written core is complete and tested. That covers method lookup and splicing,
-the streaming client, the escalation loop, the planner wiring, and the CLI. Methods whose body
-is `throw new UnsupportedOperationException("TODO(codegen)")` are stubs for the PowerShell
-pipeline to fill, and each one's javadoc is its contract. When they are filled, enable the two
-`@Disabled` tests in `JobRunnerTest`.
+## Scaffold stage (experimental)
+
+`src/main/resources/com/jobcrm/codegen/scaffold-prompt.txt` has the 27b write a skeleton: new types,
+signatures, contracts, and `TODO(codegen)` stubs, with anything it may not do listed under MANUAL.
+The metrics package (`com.jobcrm.codegen.metrics`) was built this way and then filled by the 7b,
+10 of 10 methods on the first try. It is not a CLI command yet. What a real `scaffold` command
+needs, from three live runs: one or two types per request; a budget of about 40k tokens (reasoning
+alone used 21k-26k); treat `finish_reason: length` or an empty reply as a budget failure; accept
+only file blocks that have their `END FILE` marker; normalize the Javadoc; check that every body is
+a stub or logic-free; compile with the stubs in place.
+
+## Known gaps
+
+- **No auto-import yet.** The retired PowerShell orchestrator resolved `cannot find symbol: class
+  X` without a model call (repo imports first, then repo classes, then common JDK names). The Java
+  tool does not, so a missing import goes up the escalation ladder. List needed imports in the
+  request until this is ported.
+- **Metrics are not wired in.** `com.jobcrm.codegen.metrics` can log and summarize calls, but no
+  stage records them yet.
+
+## Manual one-off: `gen.cmd`
+
+For a single method without the pipeline: copy `TEMPLATE.txt`, fill it in, run
+`codegen\gen.cmd codegen\drafts\myMethod.txt`, review, and paste the body yourself. It prints the
+body fence-free and never touches your files. Its house rules (record accessors with `()`, mutable
+accumulator lists, acquire-before-try, Callable vs Runnable) are also what every pipeline prompt
+starts with.

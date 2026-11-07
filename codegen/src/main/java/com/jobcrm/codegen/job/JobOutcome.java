@@ -3,8 +3,7 @@ package com.jobcrm.codegen.job;
 import java.nio.file.Path;
 
 /**
- * How a job ended. {@link Status#exitCode()} is the process exit code (same as the PowerShell
- * version, plus 2 and 4).
+ * How a job ended. {@link Status#exitCode()} is the process exit code.
  *
  * @param runDir nullable when the job failed before the run folder was created
  * @param commit nullable short sha when auto-commit made a commit

@@ -7,7 +7,7 @@ package com.jobcrm.codegen.config;
  * @param platform key into "platforms"
  * @param model model id on that platform (as listed by GET /models)
  * @param temperature nullable; default 0.2
- * @param timeoutSec legacy total timeout used by the PowerShell scripts; ignored by the Java tool
+ * @param timeoutSec legacy total timeout from the retired PowerShell scripts; ignored
  * @param firstTokenTimeoutSec nullable; max wait for the first streamed data line, which covers
  *     queueing behind other requests and model loading; default 900
  * @param idleTimeoutSec nullable; max gap between streamed lines once data has started; default 120
