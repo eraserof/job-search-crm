@@ -50,7 +50,27 @@ public final class RunLock implements AutoCloseable {
    * </ol>
    */
   public static RunLock acquire(Path file, String description) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    try {
+        Files.createDirectories(file.getParent());
+        String content = ProcessHandle.current().pid() + "\n" + description + " (started " + Instant.now() + ")\n";
+        for (int attempt = 0; attempt < 2; attempt++) {
+            try {
+                Files.writeString(file, content, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW);
+                return new RunLock(file);
+            } catch (FileAlreadyExistsException e) {
+                Optional<Long> owner = ownerPid(file);
+                boolean alive = owner.isPresent() && ProcessHandle.of(owner.get()).map(ProcessHandle::isAlive).orElse(false);
+                if (alive || attempt == 1) {
+                    throw new LockHeldException(file, Files.readString(file, StandardCharsets.UTF_8).strip());
+                } else {
+                    Files.deleteIfExists(file);
+                }
+            }
+        }
+        throw new LockHeldException(file, "unknown");
+    } catch (IOException e) {
+        throw new UncheckedIOException("cannot create lock " + file, e);
+    }
   }
 
   /**
