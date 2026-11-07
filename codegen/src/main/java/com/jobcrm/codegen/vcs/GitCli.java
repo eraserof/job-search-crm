@@ -71,7 +71,12 @@ public final class GitCli implements Vcs {
    */
   @Override
   public boolean isDirty(Path file) throws VcsException {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    Path absolutePath = file.toAbsolutePath().normalize();
+    Path relativePath = root.relativize(absolutePath);
+    String path = relativePath.toString().replace('\\', '/');
+    
+    String status = git(List.of("status", "--porcelain", "--", path));
+    return !status.isBlank();
   }
 
   /**
