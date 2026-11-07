@@ -86,6 +86,13 @@ public final class GitCli implements Vcs {
    */
   @Override
   public String commitOnly(Path file, String subject, String body) throws VcsException {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    Path normalizedFile = file.toAbsolutePath().normalize();
+    Path relativePath = root.relativize(normalizedFile);
+    String path = relativePath.toString().replace('\\', '/');
+    
+    git(List.of("add", "--", path));
+    git(List.of("commit", "-q", "-m", subject, "-m", body, "--", path));
+    
+    return git(List.of("rev-parse", "--short", "HEAD"));
   }
 }
