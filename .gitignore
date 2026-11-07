@@ -65,6 +65,10 @@ application-secrets.yaml
 # recorded LLM fixtures are opt-in and reviewed before commit
 src/test/resources/fixtures/agents/**/*.private.json
 
+# KiroGraph: the generated code index (and its SQLite sidecar files) stays local; config.json can be shared
+**/.kirograph/*.db
+**/.kirograph/*.db-*
+
 # llm-eval: local model-evaluation scratch (not part of the app)
 llm-eval/
 
