@@ -115,6 +115,29 @@ public final class MetricsLog {
    * </ul>
    */
   public List<CallRecord> readAll() {
-    throw new UnsupportedOperationException("TODO(codegen)");
+  if (!Files.exists(file)) {
+    return new ArrayList<>();
+  }
+  try {
+    List<String> lines = Files.readAllLines(file, StandardCharsets.UTF_8);
+    ArrayList<CallRecord> records = new ArrayList<>();
+    for (String raw : lines) {
+      String line = raw.trim();
+      if (line.isEmpty()) {
+        continue;
+      }
+      try {
+        CallRecord parsed = json.readValue(line, CallRecord.class);
+        if (parsed != null) {
+          records.add(parsed);
+        }
+      } catch (RuntimeException | IOException e) {
+        // Skip this line and continue with the next one
+      }
+    }
+    return records;
+  } catch (IOException e) {
+    throw new UncheckedIOException("cannot read metrics from " + file, e);
+  }
   }
 }
