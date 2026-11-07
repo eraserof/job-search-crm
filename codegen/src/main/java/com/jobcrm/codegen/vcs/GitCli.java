@@ -32,7 +32,31 @@ public final class GitCli implements Vcs {
    * </ol>
    */
   String git(List<String> args) throws VcsException {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    ArrayList<String> command = new ArrayList<>();
+    command.add("git");
+    command.addAll(args);
+
+    ProcessBuilder processBuilder = new ProcessBuilder(command)
+            .directory(root.toFile())
+            .redirectErrorStream(true);
+
+    try {
+        Process process = processBuilder.start();
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        int exit = process.waitFor();
+
+        if (exit != 0) {
+            String cmd = String.join(" ", args);
+            throw new VcsException("git " + cmd + " failed: " + output.strip());
+        }
+
+        return output.strip();
+    } catch (IOException e) {
+        throw new VcsException("cannot run git", e);
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new VcsException("interrupted", e);
+    }
   }
 
   /** {@code git rev-parse --abbrev-ref HEAD}. */
