@@ -8,7 +8,8 @@ import java.util.TreeMap;
 /** Plain-text table of stage summaries. */
 final class StatsReport {
 
-  private static final String HEADER = "stage calls failures prompt_total prompt_avg completion_total completion_avg avg_ms max_ms ctps";
+  private static final String HEADER =
+      "stage calls failures prompt_total prompt_avg completion_total completion_avg avg_ms max_ms ctps";
   private static final String ROW_FORMAT = "%s %d %d %d %.1f %d %.1f %.1f %d %.2f";
 
   private StatsReport() {}
@@ -19,26 +20,27 @@ final class StatsReport {
    * <ol>
    *   <li>If {@code records == null}, throw {@code new NullPointerException("records")}.
    *   <li>If {@code records.isEmpty()} is true, return the constant {@code HEADER}.
-   *   <li>Create
-   *       {@code TreeMap<String, List<CallRecord>> groups = new TreeMap<String, List<CallRecord>>();}.
+   *   <li>Create {@code TreeMap<String, List<CallRecord>> groups = new TreeMap<String,
+   *       List<CallRecord>>();}.
    *   <li>For each {@code CallRecord record} in {@code records}:
    *       <ol type="a">
-   *         <li>Set {@code String stage = record.stage();}. If {@code stage == null}, throw
-   *             {@code new NullPointerException("stage")}.
-   *         <li>Set {@code List<CallRecord> bucket = groups.get(stage);}. If
-   *             {@code bucket == null}, set {@code bucket = new ArrayList<CallRecord>();} and call
-   *             {@code groups.put(stage, bucket);}.
+   *         <li>Set {@code String stage = record.stage();}. If {@code stage == null}, throw {@code
+   *             new NullPointerException("stage")}.
+   *         <li>Set {@code List<CallRecord> bucket = groups.get(stage);}. If {@code bucket ==
+   *             null}, set {@code bucket = new ArrayList<CallRecord>();} and call {@code
+   *             groups.put(stage, bucket);}.
    *         <li>Call {@code bucket.add(record);}.
    *       </ol>
-   *   <li>Create {@code StringBuilder out = new StringBuilder(HEADER);}. Call
-   *       {@code out.append('\n');}.
-   *   <li>For each {@code String stage} in {@code groups.keySet()}: set
-   *       {@code StageStats stats = StageStats.from(stage, groups.get(stage));}, call
-   *       {@code out.append(formatRow(stats));}, then call {@code out.append('\n');}.
+   *   <li>Create {@code StringBuilder out = new StringBuilder(HEADER);}. Call {@code
+   *       out.append('\n');}.
+   *   <li>For each {@code String stage} in {@code groups.keySet()}: set {@code StageStats stats =
+   *       StageStats.from(stage, groups.get(stage));}, call {@code out.append(formatRow(stats));},
+   *       then call {@code out.append('\n');}.
    *   <li>Return {@code out.toString();}.
    * </ol>
    *
    * <p>The header line is exactly:
+   *
    * <pre>
    * stage calls failures prompt_total prompt_avg completion_total completion_avg avg_ms max_ms ctps
    * </pre>
@@ -66,29 +68,29 @@ final class StatsReport {
    * </ul>
    */
   static String report(List<CallRecord> records) {
-  if (records == null) throw new NullPointerException("records");
-  if (records.isEmpty()) return HEADER;
+    if (records == null) throw new NullPointerException("records");
+    if (records.isEmpty()) return HEADER;
 
-  TreeMap<String, List<CallRecord>> groups = new TreeMap<>();
-  for (CallRecord record : records) {
-    String stage = record.stage();
-    if (stage == null) throw new NullPointerException("stage");
-    List<CallRecord> bucket = groups.get(stage);
-    if (bucket == null) {
-      bucket = new ArrayList<>();
-      groups.put(stage, bucket);
+    TreeMap<String, List<CallRecord>> groups = new TreeMap<>();
+    for (CallRecord record : records) {
+      String stage = record.stage();
+      if (stage == null) throw new NullPointerException("stage");
+      List<CallRecord> bucket = groups.get(stage);
+      if (bucket == null) {
+        bucket = new ArrayList<>();
+        groups.put(stage, bucket);
+      }
+      bucket.add(record);
     }
-    bucket.add(record);
-  }
 
-  StringBuilder out = new StringBuilder(HEADER);
-  out.append('\n');
-  for (String stage : groups.keySet()) {
-    StageStats stats = StageStats.from(stage, groups.get(stage));
-    out.append(formatRow(stats)).append('\n');
-  }
+    StringBuilder out = new StringBuilder(HEADER);
+    out.append('\n');
+    for (String stage : groups.keySet()) {
+      StageStats stats = StageStats.from(stage, groups.get(stage));
+      out.append(formatRow(stats)).append('\n');
+    }
 
-  return out.toString();
+    return out.toString();
   }
 
   /**
@@ -96,8 +98,7 @@ final class StatsReport {
    *
    * <ol>
    *   <li>If {@code stats == null}, throw {@code new NullPointerException("stats")}.
-   *   <li>Return
-   *       {@code String.format(Locale.US, ROW_FORMAT, stats.stage(), stats.calls(),
+   *   <li>Return {@code String.format(Locale.US, ROW_FORMAT, stats.stage(), stats.calls(),
    *       stats.failures(), stats.promptTokensTotal(), stats.promptTokensAverage(),
    *       stats.completionTokensTotal(), stats.completionTokensAverage(),
    *       stats.totalTimeMillisAverage(), stats.totalTimeMillisMax(),
@@ -105,6 +106,7 @@ final class StatsReport {
    * </ol>
    *
    * <p>The row format is exactly:
+   *
    * <pre>
    * %s %d %d %d %.1f %d %.1f %.1f %d %.2f
    * </pre>
@@ -127,9 +129,21 @@ final class StatsReport {
    * </ul>
    */
   private static String formatRow(StageStats stats) {
-  if (stats == null) {
-    throw new NullPointerException("stats");
-  }
-  return String.format(Locale.US, ROW_FORMAT, stats.stage(), stats.calls(), stats.failures(), stats.promptTokensTotal(), stats.promptTokensAverage(), stats.completionTokensTotal(), stats.completionTokensAverage(), stats.totalTimeMillisAverage(), stats.totalTimeMillisMax(), stats.completionTokensPerSecond());
+    if (stats == null) {
+      throw new NullPointerException("stats");
+    }
+    return String.format(
+        Locale.US,
+        ROW_FORMAT,
+        stats.stage(),
+        stats.calls(),
+        stats.failures(),
+        stats.promptTokensTotal(),
+        stats.promptTokensAverage(),
+        stats.completionTokensTotal(),
+        stats.completionTokensAverage(),
+        stats.totalTimeMillisAverage(),
+        stats.totalTimeMillisMax(),
+        stats.completionTokensPerSecond());
   }
 }

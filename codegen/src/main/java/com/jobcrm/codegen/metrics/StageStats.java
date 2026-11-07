@@ -31,10 +31,10 @@ record StageStats(
    * Builds a StageStats from the records for one stage.
    *
    * <ol>
-   *   <li>If {@code stage == null}, throw {@code new NullPointerException("stage")}. If
-   *       {@code records == null}, throw {@code new NullPointerException("records")}. If
-   *       {@code records.isEmpty()} is true, throw
-   *       {@code new IllegalArgumentException("records must not be empty")}.
+   *   <li>If {@code stage == null}, throw {@code new NullPointerException("stage")}. If {@code
+   *       records == null}, throw {@code new NullPointerException("records")}. If {@code
+   *       records.isEmpty()} is true, throw {@code new IllegalArgumentException("records must not
+   *       be empty")}.
    *   <li>Set {@code long calls = records.size();}.
    *   <li>Set {@code long failures = countFailures(records);}.
    *   <li>Set {@code long promptTokensTotal = sumPromptTokens(records);}.
@@ -44,10 +44,9 @@ record StageStats(
    *   <li>Set {@code double promptTokensAverage = (double) promptTokensTotal / calls;}.
    *   <li>Set {@code double completionTokensAverage = (double) completionTokensTotal / calls;}.
    *   <li>Set {@code double totalTimeMillisAverage = (double) totalMillisSum / calls;}.
-   *   <li>If {@code totalMillisSum == 0L}, set
-   *       {@code double completionTokensPerSecond = 0.0D}; otherwise set
-   *       {@code double completionTokensPerSecond = ((double) completionTokensTotal * 1000.0D) /
-   *       totalMillisSum;}.
+   *   <li>If {@code totalMillisSum == 0L}, set {@code double completionTokensPerSecond = 0.0D};
+   *       otherwise set {@code double completionTokensPerSecond = ((double) completionTokensTotal *
+   *       1000.0D) / totalMillisSum;}.
    *   <li>Return {@code new StageStats(stage, calls, failures, promptTokensTotal,
    *       promptTokensAverage, completionTokensTotal, completionTokensAverage,
    *       totalTimeMillisAverage, totalTimeMillisMax, completionTokensPerSecond);}.
@@ -80,9 +79,20 @@ record StageStats(
     double completionTokensAverage = (double) completionTokensTotal / calls;
     double totalTimeMillisAverage = (double) totalMillisSum / calls;
 
-    double completionTokensPerSecond = totalMillisSum == 0L ? 0.0D : ((double) completionTokensTotal * 1000.0D) / totalMillisSum;
+    double completionTokensPerSecond =
+        totalMillisSum == 0L ? 0.0D : ((double) completionTokensTotal * 1000.0D) / totalMillisSum;
 
-    return new StageStats(stage, calls, failures, promptTokensTotal, promptTokensAverage, completionTokensTotal, completionTokensAverage, totalTimeMillisAverage, totalTimeMillisMax, completionTokensPerSecond);
+    return new StageStats(
+        stage,
+        calls,
+        failures,
+        promptTokensTotal,
+        promptTokensAverage,
+        completionTokensTotal,
+        completionTokensAverage,
+        totalTimeMillisAverage,
+        totalTimeMillisMax,
+        completionTokensPerSecond);
   }
 
   /**
@@ -106,16 +116,16 @@ record StageStats(
    */
   private static long countFailures(List<CallRecord> records) {
     if (records == null) {
-        throw new NullPointerException("records");
+      throw new NullPointerException("records");
     }
     if (records.isEmpty()) {
-        return 0L;
+      return 0L;
     }
     long failures = 0L;
     for (CallRecord record : records) {
-        if (!record.success()) {
-            failures++;
-        }
+      if (!record.success()) {
+        failures++;
+      }
     }
     return failures;
   }
@@ -143,14 +153,14 @@ record StageStats(
    */
   private static long sumPromptTokens(List<CallRecord> records) {
     if (records == null) {
-        throw new NullPointerException("records");
+      throw new NullPointerException("records");
     }
     if (records.isEmpty()) {
-        return 0L;
+      return 0L;
     }
     long total = 0L;
     for (CallRecord record : records) {
-        total += record.promptTokens();
+      total += record.promptTokens();
     }
     return total;
   }
@@ -162,8 +172,8 @@ record StageStats(
    *   <li>If {@code records == null}, throw {@code new NullPointerException("records")}.
    *   <li>If {@code records.isEmpty()} is true, return {@code 0L}.
    *   <li>Create {@code long total = 0L;}.
-   *   <li>Use {@code for (CallRecord record : records)} and add
-   *       {@code record.completionTokens()} to {@code total}.
+   *   <li>Use {@code for (CallRecord record : records)} and add {@code record.completionTokens()}
+   *       to {@code total}.
    *   <li>Return {@code total}.
    * </ol>
    *
@@ -178,14 +188,14 @@ record StageStats(
    */
   private static long sumCompletionTokens(List<CallRecord> records) {
     if (records == null) {
-        throw new NullPointerException("records");
+      throw new NullPointerException("records");
     }
     if (records.isEmpty()) {
-        return 0L;
+      return 0L;
     }
     long total = 0L;
     for (CallRecord record : records) {
-        total += record.completionTokens();
+      total += record.completionTokens();
     }
     return total;
   }
@@ -213,14 +223,14 @@ record StageStats(
    */
   private static long sumTotalMillis(List<CallRecord> records) {
     if (records == null) {
-        throw new NullPointerException("records");
+      throw new NullPointerException("records");
     }
     if (records.isEmpty()) {
-        return 0L;
+      return 0L;
     }
     long total = 0L;
     for (CallRecord record : records) {
-        total += record.totalMillis();
+      total += record.totalMillis();
     }
     return total;
   }
@@ -230,11 +240,11 @@ record StageStats(
    *
    * <ol>
    *   <li>If {@code records == null}, throw {@code new NullPointerException("records")}.
-   *   <li>If {@code records.isEmpty()} is true, throw
-   *       {@code new IllegalArgumentException("records must not be empty")}.
+   *   <li>If {@code records.isEmpty()} is true, throw {@code new IllegalArgumentException("records
+   *       must not be empty")}.
    *   <li>Create {@code long max = records.get(0).totalMillis();}.
-   *   <li>Use {@code for (CallRecord record : records)}; if {@code record.totalMillis() > max},
-   *       set {@code max = record.totalMillis();}.
+   *   <li>Use {@code for (CallRecord record : records)}; if {@code record.totalMillis() > max}, set
+   *       {@code max = record.totalMillis();}.
    *   <li>Return {@code max}.
    * </ol>
    *
@@ -248,17 +258,17 @@ record StageStats(
    */
   private static long maxTotalMillis(List<CallRecord> records) {
     if (records == null) {
-        throw new NullPointerException("records");
+      throw new NullPointerException("records");
     }
     if (records.isEmpty()) {
-        throw new IllegalArgumentException("records must not be empty");
+      throw new IllegalArgumentException("records must not be empty");
     }
 
     long max = records.get(0).totalMillis();
     for (CallRecord record : records) {
-        if (record.totalMillis() > max) {
-            max = record.totalMillis();
-        }
+      if (record.totalMillis() > max) {
+        max = record.totalMillis();
+      }
     }
     return max;
   }
