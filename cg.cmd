@@ -20,6 +20,9 @@ if errorlevel 1 (
   popd
   exit /b 2
 )
+rem Run on the JDK the tool was built with (written by installDist), not whatever JAVA_HOME says.
+set "JAVA_HOME_FILE=%ROOT%codegen\build\install\codegen\java-home.txt"
+if exist "%JAVA_HOME_FILE%" set /p JAVA_HOME=<"%JAVA_HOME_FILE%"
 call "%ROOT%codegen\build\install\codegen\bin\codegen.bat" %*
 set "RC=%ERRORLEVEL%"
 popd

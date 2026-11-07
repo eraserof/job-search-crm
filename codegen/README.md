@@ -127,6 +127,15 @@ matters because the pipeline edits codegen's own sources, and the installed laun
 snapshot. Type `.\cg`, not `cg`: this machine sets NoDefaultCurrentDirectoryInExePath, so cmd does
 not run programs from the current folder by bare name.
 
+**Which JDK runs what.** You do not need to set `JAVA_HOME` for this repo. Gradle runs its daemon
+on a pinned JDK 25 (`gradle/gradle-daemon-jvm.properties`), and `gradle.properties` turns off
+JDK auto-detection, so the daemon and the compile toolchain use only JDKs Gradle provisioned under
+`~/.gradle/jdks`. `cg.cmd` runs the tool on that same JDK (recorded in
+`codegen\build\install\codegen\java-home.txt`). This matters because google-java-format (Spotless)
+works against the compiler internals of whatever JDK runs Gradle: it failed with
+`NoSuchFieldError ... endPositions` on JDK 21, on JDK 27, and on a half-updated IDE-bundled JDK 25.
+After changing these files, run `gradlew --stop` once so no old daemon is reused.
+
 ```
 .\cg models
 .\cg plan codegen\requests\x.json

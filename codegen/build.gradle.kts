@@ -33,6 +33,30 @@ application {
     applicationName = "codegen"
 }
 
+// The generated start script runs whatever JAVA_HOME says, which may be older than Java 25. Record
+// the toolchain JDK in the install folder; cg.cmd sets JAVA_HOME from it before calling the script.
+val toolchainJavaHome =
+    javaToolchains
+        .launcherFor(java.toolchain)
+        .map { it.metadata.installationPath.asFile.absolutePath }
+
+// A separate task with the path as an input, so it re-runs whenever the toolchain changes (a doLast
+// on installDist would be skipped while installDist is up to date and leave a stale path behind).
+val writeJavaHome by tasks.registering {
+    val home = toolchainJavaHome
+    val out = layout.buildDirectory.file("install/codegen/java-home.txt")
+    inputs.property("javaHome", home)
+    outputs.file(out)
+    doLast {
+        out.get().asFile.writeText(home.get())
+    }
+}
+
+// installDist syncs its folder and would delete java-home.txt, so write it afterwards.
+tasks.named("installDist") {
+    finalizedBy(writeJavaHome)
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     testLogging {
