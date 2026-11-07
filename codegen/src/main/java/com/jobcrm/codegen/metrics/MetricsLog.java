@@ -58,7 +58,22 @@ public final class MetricsLog {
    * </ul>
    */
   public void append(CallRecord record) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+  if (record == null) {
+    throw new IllegalArgumentException("record must not be null");
+  }
+  Path parent = file.getParent();
+  if (parent != null) {
+    try {
+      Files.createDirectories(parent);
+    } catch (IOException e) {
+      throw new UncheckedIOException("cannot append metrics to " + file, e);
+    }
+  }
+  try {
+    Files.writeString(file, json.writeValueAsString(record) + "\n", StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND, StandardOpenOption.WRITE);
+  } catch (IOException e) {
+    throw new UncheckedIOException("cannot append metrics to " + file, e);
+  }
   }
 
   /**
