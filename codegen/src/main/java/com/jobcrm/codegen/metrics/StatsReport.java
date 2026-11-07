@@ -66,7 +66,29 @@ final class StatsReport {
    * </ul>
    */
   static String report(List<CallRecord> records) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+  if (records == null) throw new NullPointerException("records");
+  if (records.isEmpty()) return HEADER;
+
+  TreeMap<String, List<CallRecord>> groups = new TreeMap<>();
+  for (CallRecord record : records) {
+    String stage = record.stage();
+    if (stage == null) throw new NullPointerException("stage");
+    List<CallRecord> bucket = groups.get(stage);
+    if (bucket == null) {
+      bucket = new ArrayList<>();
+      groups.put(stage, bucket);
+    }
+    bucket.add(record);
+  }
+
+  StringBuilder out = new StringBuilder(HEADER);
+  out.append('\n');
+  for (String stage : groups.keySet()) {
+    StageStats stats = StageStats.from(stage, groups.get(stage));
+    out.append(formatRow(stats)).append('\n');
+  }
+
+  return out.toString();
   }
 
   /**
