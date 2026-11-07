@@ -36,26 +36,25 @@ public final class GitCli implements Vcs {
     command.add("git");
     command.addAll(args);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(command)
-            .directory(root.toFile())
-            .redirectErrorStream(true);
+    ProcessBuilder processBuilder =
+        new ProcessBuilder(command).directory(root.toFile()).redirectErrorStream(true);
 
     try {
-        Process process = processBuilder.start();
-        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        int exit = process.waitFor();
+      Process process = processBuilder.start();
+      String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+      int exit = process.waitFor();
 
-        if (exit != 0) {
-            String cmd = String.join(" ", args);
-            throw new VcsException("git " + cmd + " failed: " + output.strip());
-        }
+      if (exit != 0) {
+        String cmd = String.join(" ", args);
+        throw new VcsException("git " + cmd + " failed: " + output.strip());
+      }
 
-        return output.strip();
+      return output.strip();
     } catch (IOException e) {
-        throw new VcsException("cannot run git", e);
+      throw new VcsException("cannot run git", e);
     } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new VcsException("interrupted", e);
+      Thread.currentThread().interrupt();
+      throw new VcsException("interrupted", e);
     }
   }
 
@@ -74,25 +73,25 @@ public final class GitCli implements Vcs {
     Path absolutePath = file.toAbsolutePath().normalize();
     Path relativePath = root.relativize(absolutePath);
     String path = relativePath.toString().replace('\\', '/');
-    
+
     String status = git(List.of("status", "--porcelain", "--", path));
     return !status.isBlank();
   }
 
   /**
-   * With path = {@code root.relativize(file)} using forward slashes: run {@code git add --
-   * <path>}, then {@code git commit -q -m <subject> -m <body> -- <path>} (a pathspec makes git
-   * commit only that file), then return {@code git rev-parse --short HEAD}.
+   * With path = {@code root.relativize(file)} using forward slashes: run {@code git add -- <path>},
+   * then {@code git commit -q -m <subject> -m <body> -- <path>} (a pathspec makes git commit only
+   * that file), then return {@code git rev-parse --short HEAD}.
    */
   @Override
   public String commitOnly(Path file, String subject, String body) throws VcsException {
     Path normalizedFile = file.toAbsolutePath().normalize();
     Path relativePath = root.relativize(normalizedFile);
     String path = relativePath.toString().replace('\\', '/');
-    
+
     git(List.of("add", "--", path));
     git(List.of("commit", "-q", "-m", subject, "-m", body, "--", path));
-    
+
     return git(List.of("rev-parse", "--short", "HEAD"));
   }
 }

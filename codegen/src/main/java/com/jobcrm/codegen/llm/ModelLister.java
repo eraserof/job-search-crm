@@ -41,25 +41,29 @@ public final class ModelLister {
    * </ol>
    */
   public List<String> list(Platform platform) throws LlmException {
-    HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(platform.base() + "/models"))
+    HttpRequest.Builder builder =
+        HttpRequest.newBuilder(URI.create(platform.base() + "/models"))
             .timeout(Duration.ofSeconds(10))
             .GET();
     platform.apiKey().ifPresent(k -> builder.header("Authorization", "Bearer " + k));
 
     List<String> models = new ArrayList<>();
     try {
-        HttpResponse<String> response = http.send(builder.build(), HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) throw LlmException.fatal("HTTP " + response.statusCode() + " from " + platform.base() + "/models");
-        JsonNode root = json.readTree(response.body());
-        for (JsonNode node : root.path("data")) {
-            String id = node.path("id").asText();
-            if (!id.isBlank()) models.add(id);
-        }
+      HttpResponse<String> response =
+          http.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+      if (response.statusCode() != 200)
+        throw LlmException.fatal(
+            "HTTP " + response.statusCode() + " from " + platform.base() + "/models");
+      JsonNode root = json.readTree(response.body());
+      for (JsonNode node : root.path("data")) {
+        String id = node.path("id").asText();
+        if (!id.isBlank()) models.add(id);
+      }
     } catch (IOException e) {
-        throw LlmException.retryable("cannot reach " + platform.base() + ": " + e.getMessage(), e);
+      throw LlmException.retryable("cannot reach " + platform.base() + ": " + e.getMessage(), e);
     } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw LlmException.fatal("interrupted", e);
+      Thread.currentThread().interrupt();
+      throw LlmException.fatal("interrupted", e);
     }
 
     return models;
@@ -71,7 +75,7 @@ public final class ModelLister {
    */
   public static boolean contains(List<String> available, String model) {
     if (available == null || model == null) {
-        return false;
+      return false;
     }
     return available.contains(model) || available.contains(model + ":latest");
   }
