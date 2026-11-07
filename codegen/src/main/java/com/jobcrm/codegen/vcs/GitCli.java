@@ -62,7 +62,7 @@ public final class GitCli implements Vcs {
   /** {@code git rev-parse --abbrev-ref HEAD}. */
   @Override
   public String currentBranch() throws VcsException {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    return git(List.of("rev-parse", "--abbrev-ref", "HEAD"));
   }
 
   /**
