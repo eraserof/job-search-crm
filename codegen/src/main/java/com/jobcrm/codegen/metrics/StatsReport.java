@@ -105,6 +105,9 @@ final class StatsReport {
    * </ul>
    */
   private static String formatRow(StageStats stats) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+  if (stats == null) {
+    throw new NullPointerException("stats");
+  }
+  return String.format(Locale.US, ROW_FORMAT, stats.stage(), stats.calls(), stats.failures(), stats.promptTokensTotal(), stats.promptTokensAverage(), stats.completionTokensTotal(), stats.completionTokensAverage(), stats.totalTimeMillisAverage(), stats.totalTimeMillisMax(), stats.completionTokensPerSecond());
   }
 }
