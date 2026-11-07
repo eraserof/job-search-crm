@@ -1,12 +1,9 @@
 package com.jobcrm.codegen.java;
 
-import java.util.stream.Collectors;
-
-import java.util.regex.Pattern;
-
-import java.util.regex.Matcher;
-
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /** Turns a raw code-model reply into a method body ready for {@link Splicer}. */
 public final class BodyExtractor {
@@ -28,10 +25,11 @@ public final class BodyExtractor {
     Pattern pattern = Pattern.compile("<think>.*?</think>", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(raw);
     String cleaned = matcher.replaceAll("");
-    return cleaned.lines()
-                  .filter(line -> !line.strip().startsWith("```"))
-                  .collect(Collectors.joining("\n"))
-                  .strip();
+    return cleaned
+        .lines()
+        .filter(line -> !line.strip().startsWith("```"))
+        .collect(Collectors.joining("\n"))
+        .strip();
   }
 
   /**
@@ -40,29 +38,29 @@ public final class BodyExtractor {
    * <ol>
    *   <li>Wrap the cleaned text as a class: {@code String wrapped = "class Wrapper__ {\n" + cleaned
    *       + "\n}";}
-   *   <li>{@code Optional<MethodLocator.BodyRange> range = MethodLocator.find(wrapped,
-   *       signature);} (find never throws for an unparsable source; it returns empty).
+   *   <li>{@code Optional<MethodLocator.BodyRange> range = MethodLocator.find(wrapped, signature);}
+   *       (find never throws for an unparsable source; it returns empty).
    *   <li>If present, return the text strictly between the braces: {@code wrapped.substring(
    *       range.get().open() + 1, range.get().close())}, with leading and trailing blank lines
    *       removed (strip only "\n" and "\r" at the ends, not spaces, so indentation stays).
    *   <li>Otherwise return {@code cleaned} unchanged: it is already a body.
    * </ol>
    *
-   * Catch IllegalArgumentException from MethodLocator (a bad signature) and return {@code
-   * cleaned} in that case too.
+   * Catch IllegalArgumentException from MethodLocator (a bad signature) and return {@code cleaned}
+   * in that case too.
    */
   public static String extractBody(String cleaned, String signature) {
-    String wrapped = "class Wrapper__ {\n" + cleaned + "\n};";
+    String wrapped = "class Wrapper__ {\n" + cleaned + "\n}";
     MethodLocator.BodyRange range;
     try {
-        Optional<MethodLocator.BodyRange> optionalRange = MethodLocator.find(wrapped, signature);
-        if (optionalRange.isPresent()) {
-            range = optionalRange.get();
-            String inner = wrapped.substring(range.open() + 1, range.close());
-            return inner.replaceAll("^[\\r\\n]+", "").replaceAll("[\\r\\n]+$", "");
-        }
+      Optional<MethodLocator.BodyRange> optionalRange = MethodLocator.find(wrapped, signature);
+      if (optionalRange.isPresent()) {
+        range = optionalRange.get();
+        String inner = wrapped.substring(range.open() + 1, range.close());
+        return inner.replaceAll("^[\\r\\n]+", "").replaceAll("[\\r\\n]+$", "");
+      }
     } catch (IllegalArgumentException e) {
-        return cleaned;
+      return cleaned;
     }
     return cleaned;
   }

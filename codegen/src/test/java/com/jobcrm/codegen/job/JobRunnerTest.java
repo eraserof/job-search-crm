@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -136,8 +135,6 @@ class JobRunnerTest {
   // ---------- the full ladder (needs the generated helpers) ----------
 
   @Test
-  @Disabled(
-      "enable once codegen fills BodyExtractor, BodySyntax, CompilerErrors, Prompts, RepairParser")
   void compilesOnTheFirstTryAndCommitsOnlyTheTarget() throws Exception {
     replies.add("```java\nreturn 42;\n```");
     compiles.add(true);
@@ -150,8 +147,6 @@ class JobRunnerTest {
   }
 
   @Test
-  @Disabled(
-      "enable once codegen fills BodyExtractor, BodySyntax, CompilerErrors, Prompts, RepairParser")
   void escalatesToRepairThenSavesTheRepairedPrompt() throws Exception {
     replies.add("return x;");
     replies.add("return x;");
