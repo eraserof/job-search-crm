@@ -1,0 +1,9 @@
+{
+  "ask": "Add call metrics to the Java tool, as a new package com.jobcrm.codegen.metrics (directory codegen/src/main/java/com/jobcrm/codegen/metrics). (1) CallRecord: a record describing one model call, with the stage name, model, platform name, an optional job name (nullable), promptTokens, completionTokens, reasoningTokens, timeToFirstTokenMillis, totalMillis, a success flag, and the time of the call. (2) MetricsLog: appends CallRecords to a file as JSON Lines (one record per line, UTF-8, creating parent directories) and reads them all back, skipping blank and unparsable lines. It takes the file path and a Jackson ObjectMapper. (3) StageStats and StatsReport: group records by stage and compute, per stage, the call count, the failure count, total and average prompt and completion tokens, the average and maximum total time in milliseconds, and completion tokens per second (completion tokens divided by total seconds). StatsReport renders a plain-text table with one row per stage, sorted by stage name. Do not wire any of this into the CLI or the model client yet: list that wiring under MANUAL.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/Repo.java",
+    "codegen/src/main/java/com/jobcrm/codegen/config/ResolvedStage.java",
+    "codegen/src/main/java/com/jobcrm/codegen/job/Job.java",
+    "codegen/src/main/java/com/jobcrm/codegen/job/RunLog.java"
+  ]
+}
