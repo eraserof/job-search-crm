@@ -195,7 +195,17 @@ record StageStats(
    * </ul>
    */
   private static long sumTotalMillis(List<CallRecord> records) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (records == null) {
+        throw new NullPointerException("records");
+    }
+    if (records.isEmpty()) {
+        return 0L;
+    }
+    long total = 0L;
+    for (CallRecord record : records) {
+        total += record.totalMillis();
+    }
+    return total;
   }
 
   /**
