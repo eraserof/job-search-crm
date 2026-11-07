@@ -120,14 +120,18 @@ failed, for example because of a hook. The change is left in place, uncommitted.
 ## Java port (in progress): `codegen` Gradle subproject
 
 The PowerShell scripts are being replaced by a Java tool under `codegen/src/`. It reads the same
-`models.json`, request, plan, and job files. Build and run it:
+`models.json`, request, plan, and job files. Run it from the repo root with `cg.cmd`, which
+rebuilds the tool first (`gradlew :codegen:installDist`, a few seconds when nothing changed) and
+then calls the generated launcher `codegen\build\install\codegen\bin\codegen.bat`. The rebuild
+matters because the pipeline edits codegen's own sources, and the installed launcher is a
+snapshot. Type `.\cg`, not `cg`: this machine sets NoDefaultCurrentDirectoryInExePath, so cmd does
+not run programs from the current folder by bare name.
 
 ```
-gradlew :codegen:installDist
-codegen\build\install\codegen\bin\codegen.bat models
-codegen\build\install\codegen\bin\codegen.bat plan codegen\requests\x.json
-codegen\build\install\codegen\bin\codegen.bat run <plan folder> [--from N] [--no-auto-commit]
-codegen\build\install\codegen\bin\codegen.bat job <job.json> [--code-attempts N] [--repair-rounds N] [--no-compile]
+.\cg models
+.\cg plan codegen\requests\x.json
+.\cg run <plan folder> [--from N] [--no-auto-commit]
+.\cg job <job.json> [--code-attempts N] [--repair-rounds N] [--no-compile]
 ```
 
 What it adds over the scripts:
