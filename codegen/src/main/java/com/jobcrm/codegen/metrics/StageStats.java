@@ -65,7 +65,24 @@ record StageStats(
    * </ul>
    */
   static StageStats from(String stage, List<CallRecord> records) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (stage == null) throw new NullPointerException("stage");
+    if (records == null) throw new NullPointerException("records");
+    if (records.isEmpty()) throw new IllegalArgumentException("records must not be empty");
+
+    long calls = records.size();
+    long failures = countFailures(records);
+    long promptTokensTotal = sumPromptTokens(records);
+    long completionTokensTotal = sumCompletionTokens(records);
+    long totalMillisSum = sumTotalMillis(records);
+    long totalTimeMillisMax = maxTotalMillis(records);
+
+    double promptTokensAverage = (double) promptTokensTotal / calls;
+    double completionTokensAverage = (double) completionTokensTotal / calls;
+    double totalTimeMillisAverage = (double) totalMillisSum / calls;
+
+    double completionTokensPerSecond = totalMillisSum == 0L ? 0.0D : ((double) completionTokensTotal * 1000.0D) / totalMillisSum;
+
+    return new StageStats(stage, calls, failures, promptTokensTotal, promptTokensAverage, completionTokensTotal, completionTokensAverage, totalTimeMillisAverage, totalTimeMillisMax, completionTokensPerSecond);
   }
 
   /**
