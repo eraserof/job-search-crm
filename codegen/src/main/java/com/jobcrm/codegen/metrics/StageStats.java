@@ -230,6 +230,19 @@ record StageStats(
    * </ul>
    */
   private static long maxTotalMillis(List<CallRecord> records) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (records == null) {
+        throw new NullPointerException("records");
+    }
+    if (records.isEmpty()) {
+        throw new IllegalArgumentException("records must not be empty");
+    }
+
+    long max = records.get(0).totalMillis();
+    for (CallRecord record : records) {
+        if (record.totalMillis() > max) {
+            max = record.totalMillis();
+        }
+    }
+    return max;
   }
 }
