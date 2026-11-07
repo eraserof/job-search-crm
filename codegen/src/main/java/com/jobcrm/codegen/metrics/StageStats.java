@@ -88,7 +88,19 @@ record StageStats(
    * </ul>
    */
   private static long countFailures(List<CallRecord> records) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (records == null) {
+        throw new NullPointerException("records");
+    }
+    if (records.isEmpty()) {
+        return 0L;
+    }
+    long failures = 0L;
+    for (CallRecord record : records) {
+        if (!record.success()) {
+            failures++;
+        }
+    }
+    return failures;
   }
 
   /**
