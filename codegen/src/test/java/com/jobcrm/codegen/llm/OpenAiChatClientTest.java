@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobcrm.codegen.config.Platform;
 import com.jobcrm.codegen.config.ResolvedStage;
+import com.jobcrm.codegen.metrics.CallRecord;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -14,6 +15,8 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -56,6 +59,70 @@ class OpenAiChatClientTest {
 
     assertThat(text).isEqualTo("Hello");
     assertThat(lastRequest.get()).contains("\"stream\":true").contains("\"content\":\"hi\"");
+  }
+
+  @Test
+  void recordsOneCallWithUsageOnSuccessAndOneFailureOtherwise() throws Exception {
+    AtomicReference<Integer> status = new AtomicReference<>(200);
+    start(
+        ex -> {
+          if (status.get() != 200) {
+            ex.sendResponseHeaders(status.get(), -1);
+            ex.close();
+            return;
+          }
+          stream(ex);
+          send(ex, event("{\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}"));
+          send(
+              ex,
+              event(
+                  "{\"choices\":[],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":30,"
+                      + "\"completion_tokens_details\":{\"reasoning_tokens\":25}}}"));
+          send(ex, "data: [DONE]\n\n");
+          ex.close();
+        });
+    List<CallRecord> records = new ArrayList<>();
+    OpenAiChatClient client = OpenAiChatClient.create(json, records::add);
+    ResolvedStage stage = stage(Duration.ofSeconds(5), Duration.ofSeconds(5));
+
+    client.complete(stage, "hi", null);
+    status.set(400);
+    assertThatThrownBy(() -> client.complete(stage, "hi", null)).isInstanceOf(LlmException.class);
+
+    assertThat(records).hasSize(2);
+    CallRecord ok = records.get(0);
+    assertThat(ok.stage()).isEqualTo("code");
+    assertThat(ok.model()).isEqualTo("m");
+    assertThat(ok.platformName()).isEqualTo("fake");
+    assertThat(ok.success()).isTrue();
+    assertThat(ok.promptTokens()).isEqualTo(12);
+    assertThat(ok.completionTokens()).isEqualTo(30);
+    assertThat(ok.reasoningTokens()).isEqualTo(25);
+    assertThat(ok.timeToFirstTokenMillis()).isLessThanOrEqualTo(ok.totalMillis());
+    assertThat(records.get(1).success()).isFalse();
+    assertThat(records.get(1).completionTokens()).isZero();
+    assertThat(lastRequest.get()).contains("\"include_usage\":true");
+  }
+
+  @Test
+  void aFailingRecorderNeverFailsTheCall() throws Exception {
+    start(
+        ex -> {
+          stream(ex);
+          send(ex, event("{\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}"));
+          send(ex, "data: [DONE]\n\n");
+          ex.close();
+        });
+    OpenAiChatClient client =
+        OpenAiChatClient.create(
+            json,
+            record -> {
+              throw new IllegalStateException("disk full");
+            });
+
+    String text = client.complete(stage(Duration.ofSeconds(5), Duration.ofSeconds(5)), "hi", null);
+
+    assertThat(text).isEqualTo("Hi");
   }
 
   @Test

@@ -34,6 +34,8 @@ Run from the repo root:
 
 ```
 .\cg models                                   list each platform's models (or why it's unreachable)
+.\cg stats                                    per-stage summary of every recorded model call
+.\cg scaffold codegen\requests\x.json         scaffold stage: request -> reviewable new types (see below)
 .\cg plan codegen\requests\x.json             plan stage: request -> per-method jobs
 .\cg run <plan folder> [--from N] [--no-auto-commit]
 .\cg job <job.json> [--code-attempts N] [--repair-rounds N] [--no-compile] [--no-auto-commit]
@@ -138,20 +140,42 @@ half-updated IDE-bundled JDK 25. After changing these files, run `gradlew --stop
 `src/main/resources/com/jobcrm/codegen/scaffold-prompt.txt` has the 27b write a skeleton: new types,
 signatures, contracts, and `TODO(codegen)` stubs, with anything it may not do listed under MANUAL.
 The metrics package (`com.jobcrm.codegen.metrics`) was built this way and then filled by the 7b,
-10 of 10 methods on the first try. It is not a CLI command yet. What a real `scaffold` command
-needs, from three live runs: one or two types per request; a budget of about 40k tokens (reasoning
-alone used 21k-26k); treat `finish_reason: length` or an empty reply as a budget failure; accept
-only file blocks that have their `END FILE` marker; normalize the Javadoc; check that every body is
-a stub or logic-free; compile with the stubs in place.
+10 of 10 methods on the first try.
+
+```
+.\cg scaffold codegen\requests\x.json [--retries N]   request -> codegen\drafts\scaffolds\<name>-<ts>\
+.\cg scaffold-apply <draft folder>                    copy the reviewed files\ tree into the repo
+```
+
+`scaffold` never touches the source tree. It parses the reply into blocks, validates them (path
+inside the repo, `.java`, no overwrite of an existing file, package matches directory, no wildcard
+imports, stub message exactly `TODO(codegen)`, closing markers present) and re-asks once with the
+problems if that fails. The draft folder holds `files/` (new files at their repo paths),
+`add-to-N.txt`, `MANUAL.txt`, `prompt.txt` and `reply.txt`. Review it, then run `scaffold-apply`,
+which writes all files or none (it refuses if any target exists). Then compile with the stubs in
+place before running the code stage.
+
+Lessons from three live runs: one or two types per request; a budget of about 40k tokens
+(reasoning alone used 21k-26k); a `finish_reason: length` or empty reply is a budget failure.
 
 ## Known gaps
+
+- **Scaffold `ADD TO` blocks are not applied (TODO, look into).** Members for an existing class are
+  validated and saved as `add-to-N.txt` in the draft folder, but merging imports and inserting
+  members before the class's closing brace is left to you.
+- **Scaffold to `run` hand-off.** Scaffold leaves Javadoc-contract stubs; `run` consumes
+  `*.job.json`. Nothing turns stubs into jobs yet, so write a request that names the stubs and use
+  `plan`.
+- **No scaffold token cap.** `StageSpec` has no max-tokens field, so a runaway reasoning budget is
+  only stopped by the idle and first-token timeouts.
 
 - **No auto-import yet.** The retired PowerShell orchestrator resolved `cannot find symbol: class
   X` without a model call (repo imports first, then repo classes, then common JDK names). The Java
   tool does not, so a missing import goes up the escalation ladder. List needed imports in the
   request until this is ported.
-- **Metrics are not wired in.** `com.jobcrm.codegen.metrics` can log and summarize calls, but no
-  stage records them yet.
+- **Metrics have no job name.** Every call is recorded per stage, but `CallRecord.job` is always
+  null, so `stats` cannot break calls down per job. Servers that send no `usage` chunk record 0
+  tokens.
 
 ## Manual one-off: `gen.cmd`
 

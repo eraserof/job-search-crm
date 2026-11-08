@@ -6,7 +6,7 @@ import java.util.Locale;
 import java.util.TreeMap;
 
 /** Plain-text table of stage summaries. */
-final class StatsReport {
+public final class StatsReport {
 
   private static final String HEADER =
       "stage calls failures prompt_total prompt_avg completion_total completion_avg avg_ms max_ms ctps";
@@ -67,7 +67,7 @@ final class StatsReport {
    *   <li>{@code StageStats StageStats.from(String stage, java.util.List<CallRecord> records)}
    * </ul>
    */
-  static String report(List<CallRecord> records) {
+  public static String report(List<CallRecord> records) {
     if (records == null) throw new NullPointerException("records");
     if (records.isEmpty()) return HEADER;
 

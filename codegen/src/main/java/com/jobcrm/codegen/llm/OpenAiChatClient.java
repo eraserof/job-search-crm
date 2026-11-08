@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jobcrm.codegen.config.ResolvedStage;
+import com.jobcrm.codegen.metrics.CallRecord;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.ConnectException;
@@ -12,6 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -20,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,26 +46,85 @@ public final class OpenAiChatClient implements ChatClient {
 
   private final HttpClient http;
   private final ObjectMapper json;
+  private final Consumer<CallRecord> recorder;
 
   public OpenAiChatClient(HttpClient http, ObjectMapper json) {
+    this(http, json, record -> {});
+  }
+
+  /** {@code recorder} gets one {@link CallRecord} per call, successful or not. */
+  public OpenAiChatClient(HttpClient http, ObjectMapper json, Consumer<CallRecord> recorder) {
     this.http = http;
     this.json = json;
+    this.recorder = recorder;
   }
 
   public static OpenAiChatClient create(ObjectMapper json) {
+    return create(json, record -> {});
+  }
+
+  public static OpenAiChatClient create(ObjectMapper json, Consumer<CallRecord> recorder) {
     HttpClient http =
         HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(10))
             .build();
-    return new OpenAiChatClient(http, json);
+    return new OpenAiChatClient(http, json, recorder);
+  }
+
+  /** What a call learned along the way, for its {@link CallRecord}. */
+  private static final class Probe {
+    long firstDataNanos = -1;
+    SseParser.Usage usage;
   }
 
   @Override
   public String complete(ResolvedStage stage, String prompt, JsonNode responseFormat)
       throws LlmException {
-    HttpRequest request = buildRequest(stage, prompt, responseFormat);
     long startNanos = System.nanoTime();
+    Probe probe = new Probe();
+    boolean success = false;
+    try {
+      String answer = send(stage, prompt, responseFormat, startNanos, probe);
+      success = true;
+      return answer;
+    } finally {
+      record(stage, startNanos, probe, success);
+    }
+  }
+
+  /** Builds and hands over the record. A metrics problem must never fail the model call. */
+  private void record(ResolvedStage stage, long startNanos, Probe probe, boolean success) {
+    try {
+      long now = System.nanoTime();
+      long totalMillis = TimeUnit.NANOSECONDS.toMillis(now - startNanos);
+      long firstMillis =
+          probe.firstDataNanos < 0
+              ? totalMillis
+              : TimeUnit.NANOSECONDS.toMillis(probe.firstDataNanos - startNanos);
+      SseParser.Usage usage = probe.usage == null ? new SseParser.Usage(0, 0, 0) : probe.usage;
+      recorder.accept(
+          new CallRecord(
+              stage.name(),
+              stage.model(),
+              stage.platformName(),
+              null,
+              usage.promptTokens(),
+              usage.completionTokens(),
+              usage.reasoningTokens(),
+              firstMillis,
+              totalMillis,
+              success,
+              Instant.now().toString()));
+    } catch (RuntimeException e) {
+      // dropped on purpose: losing a metrics line is better than failing a run
+    }
+  }
+
+  private String send(
+      ResolvedStage stage, String prompt, JsonNode responseFormat, long startNanos, Probe probe)
+      throws LlmException {
+    HttpRequest request = buildRequest(stage, prompt, responseFormat);
     HttpResponse<Stream<String>> response = awaitHeaders(stage, request);
 
     if (response.statusCode() != 200) {
@@ -78,7 +140,7 @@ public final class OpenAiChatClient implements ChatClient {
           ? LlmException.retryable(message)
           : LlmException.fatal(message);
     }
-    return readStream(stage, response.body(), startNanos);
+    return readStream(stage, response.body(), startNanos, probe);
   }
 
   /**
@@ -98,6 +160,7 @@ public final class OpenAiChatClient implements ChatClient {
     body.put("model", stage.model());
     body.put("temperature", stage.temperature());
     body.put("stream", true);
+    body.putObject("stream_options").put("include_usage", true);
     ObjectNode message = body.putArray("messages").addObject();
     message.put("role", "user");
     message.put("content", prompt);
@@ -147,7 +210,7 @@ public final class OpenAiChatClient implements ChatClient {
     }
   }
 
-  private String readStream(ResolvedStage stage, Stream<String> lines, long startNanos)
+  private String readStream(ResolvedStage stage, Stream<String> lines, long startNanos, Probe probe)
       throws LlmException {
     BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
     Thread reader =
@@ -194,6 +257,9 @@ public final class OpenAiChatClient implements ChatClient {
         if (!SseParser.isData(line)) {
           continue;
         }
+        if (!sawData) {
+          probe.firstDataNanos = System.nanoTime();
+        }
         sawData = true;
         if (SseParser.isDone(line)) {
           return answer(out, reasoning);
@@ -204,6 +270,7 @@ public final class OpenAiChatClient implements ChatClient {
         }
         SseParser.content(line, json).ifPresent(out::append);
         SseParser.reasoning(line, json).ifPresent(reasoning::append);
+        SseParser.usage(line, json).ifPresent(u -> probe.usage = u);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

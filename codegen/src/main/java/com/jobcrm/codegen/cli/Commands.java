@@ -9,7 +9,15 @@ import picocli.CommandLine.Command;
     mixinStandardHelpOptions = true,
     description =
         "Local plan/code pipeline: the big model plans, the small model fills method bodies.",
-    subcommands = {ModelsCommand.class, PlanCommand.class, RunCommand.class, JobCommand.class})
+    subcommands = {
+      ModelsCommand.class,
+      PlanCommand.class,
+      RunCommand.class,
+      JobCommand.class,
+      ScaffoldCommand.class,
+      ScaffoldApplyCommand.class,
+      StatsCommand.class
+    })
 public final class Commands implements Runnable {
 
   @CommandLine.Spec CommandLine.Model.CommandSpec spec;

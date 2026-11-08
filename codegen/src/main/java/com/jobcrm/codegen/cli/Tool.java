@@ -14,6 +14,7 @@ import com.jobcrm.codegen.llm.OpenAiChatClient;
 import com.jobcrm.codegen.llm.RetryPolicy;
 import com.jobcrm.codegen.llm.RetryingChatClient;
 import com.jobcrm.codegen.llm.Sleeper;
+import com.jobcrm.codegen.metrics.MetricsLog;
 import com.jobcrm.codegen.vcs.GitCli;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -32,15 +33,30 @@ final class Tool {
   final ModelsConfig config;
   final ChatClient chat;
   final ModelLister lister;
+  final MetricsLog metrics;
 
   private Tool(Repo repo, ObjectMapper json, PrintWriter out, ModelsConfig config) {
     this.repo = repo;
     this.json = json;
     this.out = out;
     this.config = config;
+    this.metrics = new MetricsLog(metricsFile(repo), json);
+    // Metrics sit inside the retrying wrapper, so every attempt is its own record. A failed write
+    // is dropped: losing a metrics line must never fail a run.
     this.chat =
         new RetryingChatClient(
-            OpenAiChatClient.create(json), RetryPolicy.standard(), Sleeper.system(), out);
+            OpenAiChatClient.create(
+                json,
+                record -> {
+                  try {
+                    metrics.append(record);
+                  } catch (RuntimeException e) {
+                    // dropped on purpose
+                  }
+                }),
+            RetryPolicy.standard(),
+            Sleeper.system(),
+            out);
     HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     this.lister = new ModelLister(http, json);
   }
@@ -57,6 +73,15 @@ final class Tool {
 
   JobRunner jobRunner() {
     return new JobRunner(repo, chat, new GradleCompiler(repo.root()), new GitCli(repo.root()), out);
+  }
+
+  /** Where model calls are recorded; under the gitignored drafts folder, so it stays local. */
+  private static Path metricsFile(Repo repo) {
+    return repo.draftsDir().resolve("metrics").resolve("calls.jsonl");
+  }
+
+  Path metricsFile() {
+    return metricsFile(repo);
   }
 
   Path lockFile() {

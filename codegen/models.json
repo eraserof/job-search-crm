@@ -11,6 +11,14 @@
     }
   },
   "stages": {
+    "scaffold": {
+      "platform": "brother",
+      "model": "qwen3.8-27b",
+      "temperature": 0.3,
+      "timeoutSec": 600,
+      "firstTokenTimeoutSec": 900,
+      "idleTimeoutSec": 180
+    },
     "plan": {
       "platform": "brother",
       "model": "qwen3.8-27b",

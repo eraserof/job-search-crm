@@ -66,6 +66,27 @@ public final class SseParser {
     return text.isTextual() ? Optional.of(text.asText()) : Optional.empty();
   }
 
+  /** Token counts from a final {@code usage} object. Missing fields count as 0. */
+  public record Usage(long promptTokens, long completionTokens, long reasoningTokens) {}
+
+  /**
+   * The {@code usage} object of an event ({@code prompt_tokens}, {@code completion_tokens}, {@code
+   * completion_tokens_details.reasoning_tokens}). Servers send it once, near the end, when asked
+   * with {@code stream_options.include_usage}. Empty if the event has no usage object.
+   */
+  public static Optional<Usage> usage(String line, ObjectMapper json) {
+    JsonNode event = parse(line, json);
+    if (event == null || !event.path("usage").isObject()) {
+      return Optional.empty();
+    }
+    JsonNode usage = event.get("usage");
+    return Optional.of(
+        new Usage(
+            usage.path("prompt_tokens").asLong(0),
+            usage.path("completion_tokens").asLong(0),
+            usage.path("completion_tokens_details").path("reasoning_tokens").asLong(0)));
+  }
+
   /** The server's message when the event is an error object ({@code {"error": ...}}). */
   public static Optional<String> error(String line, ObjectMapper json) {
     JsonNode event = parse(line, json);

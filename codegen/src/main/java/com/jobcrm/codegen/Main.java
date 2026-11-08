@@ -8,6 +8,9 @@ import picocli.CommandLine;
  *
  * <pre>
  * codegen models
+ * codegen stats
+ * codegen scaffold codegen/requests/x.json [--retries N]
+ * codegen scaffold-apply codegen/drafts/scaffolds/x-20261106-101500
  * codegen plan codegen/requests/x.json
  * codegen run codegen/drafts/plans/x-20261106-101500 [--from N] [--no-auto-commit]
  * codegen job codegen/jobs/x.json [--code-attempts N] [--repair-rounds N] [--no-compile]
