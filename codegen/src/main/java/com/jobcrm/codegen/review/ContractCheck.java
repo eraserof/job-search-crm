@@ -58,7 +58,21 @@ public final class ContractCheck {
    * </ul>
    */
   public static List<String> literals(String javadoc) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (javadoc == null) {
+        throw new IllegalArgumentException("javadoc must not be null");
+    }
+    List<String> out = new ArrayList<>();
+    for (String raw : javadoc.split("\\R")) {
+        String line = raw.trim();
+        while (line.startsWith("*")) {
+            line = line.substring(1).trim();
+        }
+        line = line.replace("&lt;", "<").replace("&gt;", ">").replace("&#64;", "@").replace("&amp;", "&");
+        if (line.length() >= 2 && line.startsWith("\"") && line.endsWith("\"") && !out.contains(line)) {
+            out.add(line);
+        }
+    }
+    return out;
   }
 
   /**
