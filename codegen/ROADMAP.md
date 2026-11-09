@@ -13,6 +13,23 @@ section. Move an item to "Done" with a date when it lands.
   recorder set by `JobRunner`.
 - **Metrics: nicer `stats` output.** The table is space-separated, not aligned. Maybe add `--since`
   or `--stage` filters.
+- **Metrics: show reasoning and time to first token in `stats`.** `reasoningTokens` and
+  `timeToFirstTokenMillis` are recorded but not reported, so we cannot tell how much of a 14k-21k
+  token plan or scaffold call was thinking.
+- **Metrics: redefine `ctps`.** It is completion tokens divided by total call time, which includes
+  model load and prompt processing, so it reads 4 tok/s for the 7B. Dividing by (total minus time to
+  first token) would give generation speed.
+- **Format before commit in `run`.** `run` only compiles, so the 7B's 4-space indentation was
+  committed and `spotlessCheck` failed afterward. Run `spotlessApply` on the target before
+  committing.
+- **Plan largely copies the scaffold's contracts.** For the ContractCheck run the plan prompts were
+  the Javadoc steps re-typed, at a cost of ~4 minutes and 14.6k tokens of the 27b. When the stubs
+  came from a scaffold, jobs could be derived from the Javadoc without a model call. Same item as the
+  scaffold to `run` hand-off above.
+- **Bug catcher, layer 1 (`ContractCheck`) is built but not wired in.** `ContractCheck.missing` is
+  done and tested. Still to do: get the Javadoc above a method (`MethodLocator` returns only body
+  ranges), call it from `JobRunner` after a successful compile, and write warnings to `review.txt` in
+  the run folder. Warn only, never block the commit.
 - **Task 15's nine remaining tools** (main app; the first four read tools are on
   `feature/task-15-read-tools`).
 - **VectorGraph**, when we get to it.
@@ -72,6 +89,9 @@ Two branches share the first codegen commit (`c5e533f`) and can be merged in eit
 
 ## Done
 
+- 2026-11-09: first full scaffold, plan, code run on a new feature (`review.ContractCheck`). Both
+  bodies compiled on the first attempt with no repair. Cost: scaffold ~6 min and 21k completion
+  tokens, plan ~4 min and 14.6k, code ~34 s per method.
 - 2026-11-08: metrics wired in. `OpenAiChatClient` records every attempt (tokens, time to first
   token, total time, success) to `codegen/drafts/metrics/calls.jsonl`; `.\cg stats` prints the
   per-stage table.
