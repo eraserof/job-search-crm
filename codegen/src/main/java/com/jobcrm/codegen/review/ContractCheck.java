@@ -107,6 +107,22 @@ public final class ContractCheck {
    * </ul>
    */
   public static List<String> missing(String javadoc, String body) {
-    throw new UnsupportedOperationException("TODO(codegen)");
+    if (javadoc == null) {
+        throw new IllegalArgumentException("javadoc must not be null");
+    }
+    if (body == null) {
+        throw new IllegalArgumentException("body must not be null");
+    }
+
+    List<String> required = literals(javadoc);
+    ArrayList<String> out = new ArrayList<>();
+
+    for (String literal : required) {
+        if (!body.contains(literal)) {
+            out.add(literal);
+        }
+    }
+
+    return out;
   }
 }
