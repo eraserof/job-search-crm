@@ -68,6 +68,9 @@ src/test/resources/fixtures/agents/**/*.private.json
 # KiroGraph: the generated code index (and its SQLite sidecar files) stays local; config.json can be shared
 **/.kirograph/*.db
 **/.kirograph/*.db-*
+# per-session and usage bookkeeping, regenerated on every run
+**/.kirograph/.session-id
+**/.kirograph/token-savings.jsonl
 
 # llm-eval: local model-evaluation scratch (not part of the app)
 llm-eval/
