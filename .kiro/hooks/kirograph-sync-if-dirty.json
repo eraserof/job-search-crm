@@ -1,0 +1,21 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "KiroGraph Sync Codegen on Agent Stop",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "kirograph sync ./codegen --quiet >nul 2>&1 || exit /b 0"
+      }
+    },
+    {
+      "name": "KiroGraph Sync Second Project on Agent Stop",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "kirograph sync ./src --quiet >nul 2>&1 || exit /b 0"
+      }
+    }
+  ]
+}
