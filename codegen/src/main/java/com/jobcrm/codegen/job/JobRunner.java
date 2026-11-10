@@ -12,6 +12,7 @@ import com.jobcrm.codegen.java.Splicer;
 import com.jobcrm.codegen.llm.ChatClient;
 import com.jobcrm.codegen.llm.LlmException;
 import com.jobcrm.codegen.llm.Reasoning;
+import com.jobcrm.codegen.metrics.CallLabel;
 import com.jobcrm.codegen.vcs.Vcs;
 import com.jobcrm.codegen.vcs.VcsException;
 import java.io.PrintWriter;
@@ -44,14 +45,22 @@ public final class JobRunner {
   private final Vcs vcs;
   private final PrintWriter out;
   private final String repairTemplate;
+  private final CallLabel label;
 
   public JobRunner(Repo repo, ChatClient chat, Compiler compiler, Vcs vcs, PrintWriter out) {
+    this(repo, chat, compiler, vcs, out, new CallLabel());
+  }
+
+  /** {@code label} is set to the job's commit id while its model calls are made. */
+  public JobRunner(
+      Repo repo, ChatClient chat, Compiler compiler, Vcs vcs, PrintWriter out, CallLabel label) {
     this.repo = repo;
     this.chat = chat;
     this.compiler = compiler;
     this.vcs = vcs;
     this.out = out;
     this.repairTemplate = Resources.text("repair-prompt.txt");
+    this.label = label;
   }
 
   /**
@@ -116,6 +125,7 @@ public final class JobRunner {
     String firstPrompt = repo.read(promptFile);
     String jobPrompt = firstPrompt;
     String fileName = target.getFileName().toString();
+    String id = commitId(fileName, job.signature(), name);
 
     int total = options.codeAttempts() * (options.repairRounds() + 1);
     say(
@@ -126,6 +136,7 @@ public final class JobRunner {
     int n = 0;
     Attempt last = null;
     LlmException modelError = null;
+    CallLabel.Scope labelScope = label.use(id);
     try {
       ladder:
       for (int round = 0; round <= options.repairRounds(); round++) {
@@ -170,6 +181,7 @@ public final class JobRunner {
     } catch (LlmException e) {
       modelError = e;
     } finally {
+      labelScope.close();
       // Runs on success, failure, and exceptions: never leave a broken splice behind.
       if (!succeeded) {
         repo.write(target, original);
@@ -227,7 +239,6 @@ public final class JobRunner {
     if (!options.autoCommit()) {
       return new JobOutcome(JobOutcome.Status.COMPILED, n, log.dir(), compiled, null);
     }
-    String id = commitId(fileName, job.signature(), name);
     String subject =
         "codegen: "
             + id

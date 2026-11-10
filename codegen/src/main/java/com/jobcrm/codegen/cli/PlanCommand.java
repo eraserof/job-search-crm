@@ -3,6 +3,7 @@ package com.jobcrm.codegen.cli;
 import com.jobcrm.codegen.config.ResolvedStage;
 import com.jobcrm.codegen.llm.LlmException;
 import com.jobcrm.codegen.lock.RunLock;
+import com.jobcrm.codegen.metrics.CallLabel;
 import com.jobcrm.codegen.plan.Planner;
 import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
@@ -25,9 +26,12 @@ final class PlanCommand implements Callable<Integer> {
     try (RunLock lock = RunLock.acquire(tool.lockFile(), "plan " + request)) {
       ResolvedStage stage = tool.config.resolve("plan");
       tool.requireModel(stage);
-      Planner.Result result =
-          new Planner(tool.repo, tool.chat, tool.json, tool.out)
-              .run(tool.repo.resolve(request), stage, retries);
+      Planner.Result result;
+      try (CallLabel.Scope scope = tool.label.use(Tool.requestName(request))) {
+        result =
+            new Planner(tool.repo, tool.chat, tool.json, tool.out)
+                .run(tool.repo.resolve(request), stage, retries);
+      }
       if (!result.ok()) {
         tool.out.println("FAILED: " + result.failure());
         return 1;

@@ -8,6 +8,7 @@ import com.jobcrm.codegen.config.Platform;
 import com.jobcrm.codegen.config.ResolvedStage;
 import com.jobcrm.codegen.llm.ChatClient;
 import com.jobcrm.codegen.llm.LlmException;
+import com.jobcrm.codegen.metrics.CallLabel;
 import com.jobcrm.codegen.vcs.Vcs;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -167,6 +168,53 @@ class JobRunnerTest {
     assertThat(root.resolve("prompts/a.prompt.txt")).content().contains("the literal 42");
     assertThat(root.resolve("prompts/a.prompt.txt.orig")).exists();
     assertThat(vcs.commits).containsExactly("codegen: A.answer (3 attempt(s), repaired)");
+  }
+
+  @Test
+  void modelCallsSeeTheCommitIdAsTheirLabelAndTheLabelIsClearedAfterwards() {
+    CallLabel label = new CallLabel();
+    List<String> seen = new ArrayList<>();
+    ChatClient watching =
+        (stage, prompt, format) -> {
+          seen.add(stage.name() + "=" + label.current());
+          return (String) replies.removeFirst();
+        };
+    replies.add("return x;");
+    replies.add(
+        "=== REVISED PROMPT ===\nimplement answer\n=== Contract ===\nImplement:  int answer()\n=== END ===");
+    replies.add("return 42;");
+    compiles.add(false);
+    compiles.add(true);
+
+    new JobRunner(repo, watching, compiler, vcs, new PrintWriter(console), label)
+        .run(
+            root.resolve("01-a.job.json"),
+            job(),
+            stage("code"),
+            stage("repair"),
+            options(1, 1, true));
+
+    assertThat(seen).containsExactly("code=A.answer", "repair=A.answer", "code=A.answer");
+    assertThat(label.current()).isNull();
+  }
+
+  @Test
+  void theLabelIsClearedWhenTheModelFails() {
+    CallLabel label = new CallLabel();
+    ChatClient failing =
+        (stage, prompt, format) -> {
+          throw LlmException.retryable("cannot connect");
+        };
+
+    new JobRunner(repo, failing, compiler, vcs, new PrintWriter(console), label)
+        .run(
+            root.resolve("01-a.job.json"),
+            job(),
+            stage("code"),
+            stage("repair"),
+            options(1, 0, false));
+
+    assertThat(label.current()).isNull();
   }
 
   // ---------- helpers ----------

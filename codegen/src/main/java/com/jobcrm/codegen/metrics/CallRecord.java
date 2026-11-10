@@ -47,4 +47,20 @@ public record CallRecord(
       throw new IllegalArgumentException("totalMillis must not be negative");
     }
   }
+
+  /** The same record with {@code job} replaced; null clears it. */
+  public CallRecord withJob(String job) {
+    return new CallRecord(
+        stage,
+        model,
+        platformName,
+        job,
+        promptTokens,
+        completionTokens,
+        reasoningTokens,
+        timeToFirstTokenMillis,
+        totalMillis,
+        success,
+        time);
+  }
 }

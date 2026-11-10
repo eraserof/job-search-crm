@@ -14,6 +14,7 @@ import com.jobcrm.codegen.llm.OpenAiChatClient;
 import com.jobcrm.codegen.llm.RetryPolicy;
 import com.jobcrm.codegen.llm.RetryingChatClient;
 import com.jobcrm.codegen.llm.Sleeper;
+import com.jobcrm.codegen.metrics.CallLabel;
 import com.jobcrm.codegen.metrics.MetricsLog;
 import com.jobcrm.codegen.vcs.GitCli;
 import java.io.OutputStreamWriter;
@@ -34,6 +35,7 @@ final class Tool {
   final ChatClient chat;
   final ModelLister lister;
   final MetricsLog metrics;
+  final CallLabel label = new CallLabel();
 
   private Tool(Repo repo, ObjectMapper json, PrintWriter out, ModelsConfig config) {
     this.repo = repo;
@@ -49,7 +51,7 @@ final class Tool {
                 json,
                 record -> {
                   try {
-                    metrics.append(record);
+                    metrics.append(record.withJob(label.current()));
                   } catch (RuntimeException e) {
                     // dropped on purpose
                   }
@@ -72,7 +74,13 @@ final class Tool {
   }
 
   JobRunner jobRunner() {
-    return new JobRunner(repo, chat, new GradleCompiler(repo.root()), new GitCli(repo.root()), out);
+    return new JobRunner(
+        repo, chat, new GradleCompiler(repo.root()), new GitCli(repo.root()), out, label);
+  }
+
+  /** "codegen/requests/plan-x.json" becomes "plan-x": the label for plan and scaffold calls. */
+  static String requestName(String request) {
+    return Path.of(request).getFileName().toString().replaceFirst("\\.json$", "");
   }
 
   /** Where model calls are recorded; under the gitignored drafts folder, so it stays local. */

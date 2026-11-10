@@ -3,6 +3,7 @@ package com.jobcrm.codegen.cli;
 import com.jobcrm.codegen.config.ResolvedStage;
 import com.jobcrm.codegen.llm.LlmException;
 import com.jobcrm.codegen.lock.RunLock;
+import com.jobcrm.codegen.metrics.CallLabel;
 import com.jobcrm.codegen.scaffold.Scaffolder;
 import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
@@ -27,9 +28,12 @@ final class ScaffoldCommand implements Callable<Integer> {
     try (RunLock lock = RunLock.acquire(tool.lockFile(), "scaffold " + request)) {
       ResolvedStage stage = tool.config.resolve("scaffold");
       tool.requireModel(stage);
-      Scaffolder.Result result =
-          new Scaffolder(tool.repo, tool.chat, tool.json, tool.out)
-              .run(tool.repo.resolve(request), stage, retries);
+      Scaffolder.Result result;
+      try (CallLabel.Scope scope = tool.label.use(Tool.requestName(request))) {
+        result =
+            new Scaffolder(tool.repo, tool.chat, tool.json, tool.out)
+                .run(tool.repo.resolve(request), stage, retries);
+      }
       if (!result.ok()) {
         tool.out.println("FAILED: " + result.failure());
         return 1;

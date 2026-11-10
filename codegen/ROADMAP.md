@@ -8,9 +8,8 @@ section. Move an item to "Done" with a date when it lands.
 - **Port auto-import.** The retired PowerShell orchestrator resolved `cannot find symbol: class X`
   without a model call (repo imports first, then repo classes, then common JDK names). The Java tool
   makes a missing import climb the escalation ladder.
-- **Metrics: record the job name.** Calls are recorded per stage (see Done), but `CallRecord.job` is
-  always null. Needs a way to tell the client which job it is working for, e.g. a field on the
-  recorder set by `JobRunner`.
+- **Metrics: per-job view in `stats`** (e.g. `stats --by-job`). Calls now carry a job label (see
+  Done), but the table only groups by stage. Build it once there is data worth looking at.
 - **Metrics: nicer `stats` output.** The table is space-separated, not aligned. Maybe add `--since`
   or `--stage` filters.
 - **Metrics: show reasoning and time to first token in `stats`.** `reasoningTokens` and
@@ -89,6 +88,10 @@ Two branches share the first codegen commit (`c5e533f`) and can be merged in eit
 
 ## Done
 
+- 2026-11-10: metrics record a job label. Code and repair calls use the commit id (`Class.method`,
+  e.g. `ContractCheck.literals`, falling back to the job file name); plan and scaffold calls use the
+  request name. A shared `CallLabel` is set by `JobRunner` and the plan and scaffold commands, and
+  `Tool`'s recorder stamps it onto each `CallRecord`. `ChatClient` is unchanged.
 - 2026-11-09: first full scaffold, plan, code run on a new feature (`review.ContractCheck`). Both
   bodies compiled on the first attempt with no repair. Cost: scaffold ~6 min and 21k completion
   tokens, plan ~4 min and 14.6k, code ~34 s per method.

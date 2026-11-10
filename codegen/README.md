@@ -173,9 +173,9 @@ Lessons from three live runs: one or two types per request; a budget of about 40
   X` without a model call (repo imports first, then repo classes, then common JDK names). The Java
   tool does not, so a missing import goes up the escalation ladder. List needed imports in the
   request until this is ported.
-- **Metrics have no job name.** Every call is recorded per stage, but `CallRecord.job` is always
-  null, so `stats` cannot break calls down per job. Servers that send no `usage` chunk record 0
-  tokens.
+- **`stats` has no per-job view yet.** Calls are recorded with a job label (`Class.method` for code
+  and repair, the request name for plan and scaffold), but the table only groups by stage. Servers
+  that send no `usage` chunk record 0 tokens.
 
 ## Manual one-off: `gen.cmd`
 
