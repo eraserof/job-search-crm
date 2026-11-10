@@ -36,7 +36,9 @@
   "typesenseDashboard": false,
   "qdrantDashboard": false,
   "minLogLevel": "warn",
-  "frameworkHints": [],
+  "frameworkHints": [
+    "spring"
+  ],
   "fuzzyResolutionThreshold": 0.5,
   "enableArchitecture": false,
   "cavemanMode": "off",
