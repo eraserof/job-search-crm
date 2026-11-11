@@ -1,0 +1,6 @@
+{
+  "ask": "Implement ONLY Escalation.withDefaults() in codegen/src/main/java/com/jobcrm/codegen/config/Escalation.java. Its javadoc is the contract: replace each null field with its default (codeAttempts 2, repairRounds 0, repairMode \"prompt\"), clamp codeAttempts to at least 1 and repairRounds to at least 0, and return a new Escalation. Escalation is a record with Integer codeAttempts(), Integer repairRounds(), String repairMode(). Do not plan any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/config/Escalation.java"
+  ]
+}

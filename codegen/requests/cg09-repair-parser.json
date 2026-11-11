@@ -1,0 +1,6 @@
+{
+  "ask": "Implement ONLY RepairParser.extract(String raw, String signature) in codegen/src/main/java/com/jobcrm/codegen/job/RepairParser.java. Carry the javadoc's five steps over exactly: remove <think>...</think> blocks with Pattern.compile(\"<think>.*?</think>\", Pattern.DOTALL).matcher(raw).replaceAll(\"\"); find the REVISED PROMPT block with the given DOTALL pattern and Matcher.find(); require \"=== Contract ===\"; require the whitespace-collapsed signature to be contained in the whitespace-collapsed revised text; return Optional.of(the stripped group 1), otherwise Optional.empty().",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/job/RepairParser.java"
+  ]
+}

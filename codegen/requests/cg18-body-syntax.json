@@ -1,0 +1,6 @@
+{
+  "ask": "Implement ONLY BodySyntax.firstError(String body) in codegen/src/main/java/com/jobcrm/codegen/java/BodySyntax.java, following its javadoc. Exact JavaParser API: JavaParser parser = new JavaParser(new ParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21)); ParseResult<BlockStmt> result = parser.parseBlock(\"{\\n\" + body + \"\\n}\"); if (result.isSuccessful()) return Optional.empty(); String message = result.getProblems().isEmpty() ? \"unparsable body\" : result.getProblems().get(0).getMessage(); return Optional.of(\"syntax error: \" + message). All these types are already imported (JavaParser, ParseResult, ParserConfiguration, Problem, BlockStmt, Optional).",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/java/BodySyntax.java"
+  ]
+}

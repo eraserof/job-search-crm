@@ -1,0 +1,6 @@
+{
+  "ask": "Fill the two stubs in ContractCheck (codegen/src/main/java/com/jobcrm/codegen/review/ContractCheck.java): literals(String javadoc) first, then missing(String javadoc, String body). Plan exactly two jobs, one per method, in that order. Follow each method's Javadoc contract: copy its numbered steps, its exact exception messages and every string, including the HTML entity replacements in step 3 of literals, character for character. Do not plan any other method and do not change the signatures.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/review/ContractCheck.java"
+  ]
+}

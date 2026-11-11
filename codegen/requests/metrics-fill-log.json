@@ -1,0 +1,7 @@
+{
+  "ask": "Implement ONLY the two stubs in codegen/src/main/java/com/jobcrm/codegen/metrics/MetricsLog.java: append(CallRecord record) and readAll(). Each stub's Javadoc is its complete contract. For each job: put the class declaration line and the two fields (file, json) in classContext; copy the contract's numbered steps into behavior in order, one entry per step, keeping every quoted string, exception message, and code expression exactly as written; put the contract's Uses list into the types field and add the CallRecord record components as accessor signatures (CallRecord is a record in the same package with components stage, model, platformName, job, promptTokens, completionTokens, reasoningTokens, timeToFirstTokenMillis, totalMillis, success, time). Do not plan any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/metrics/MetricsLog.java",
+    "codegen/src/main/java/com/jobcrm/codegen/metrics/CallRecord.java"
+  ]
+}

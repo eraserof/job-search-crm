@@ -1,0 +1,9 @@
+{
+  "ask": "Implement ONLY PlanValidator.validate(Plan plan, Repo repo) in codegen/src/main/java/com/jobcrm/codegen/plan/PlanValidator.java. Carry over every rule and every message string from its javadoc exactly, in the order given, using a new ArrayList<String> for errors and a new HashSet<String> for seen ids (Set.add returns false for a duplicate). Plan is a record with List<PlanJob> jobs(); PlanJob is a record with id(), target(), signature(), classContext(), types(), List<String> behavior(), List<String> imports(). MethodLocator.count(String source, String signature) returns the number of matches, -1 when the source does not parse, and throws IllegalArgumentException for a bad signature. Use continue to skip to the next job after a missing target.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/plan/PlanValidator.java",
+    "codegen/src/main/java/com/jobcrm/codegen/plan/Plan.java",
+    "codegen/src/main/java/com/jobcrm/codegen/plan/PlanJob.java",
+    "codegen/src/main/java/com/jobcrm/codegen/Repo.java"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "ask": "Implement ONLY these two methods in codegen/src/main/java/com/jobcrm/codegen/llm/RetryPolicy.java, following their javadoc: (1) RetryPolicy.standard(), which returns new RetryPolicy(List.of(Duration.ofSeconds(30), Duration.ofSeconds(60), Duration.ofSeconds(120))); (2) delayAfter(int failuresSoFar), which returns Optional.of(delays.get(failuresSoFar - 1)) when 1 <= failuresSoFar <= delays.size(), else Optional.empty(). RetryPolicy is a record whose component is List<Duration> delays. Do not plan any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/llm/RetryPolicy.java"
+  ]
+}

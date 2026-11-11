@@ -2,6 +2,19 @@
 inclusion: always
 ---
 
+## Multi-Project KiroGraph Routing
+
+This workspace contains two separate codebases, each indexed by its own KiroGraph MCP server. Always route graph queries to the matching server based on the directory you are inspecting or modifying:
+
+- **`./codegen/`** -> Use the **`kirograph-codegen`** MCP server tools.
+- **`./src/`** -> Use the **`kirograph-jobcrm`** MCP server tools.
+
+### Rules for Cross-Project Work
+- Never query `kirograph-codegen` for symbols living inside `kirograph-jobcrm` (or vice versa).
+- If a change in one project affects shared contracts, DTOs, or API endpoints used by the other, query **both** MCP servers before modifying the interface.
+- Do not run `kirograph sync` manually unless graph results appear stale; the `Stop` hook updates both indexes automatically after edits.
+
+
 # Development Guidelines
 
 Team-wide conventions for building the Job-Search CRM. This document is the source of truth for language, structure, testing, and dependencies. Anything not covered here is decided by the design docs under `.kiro/specs/job-search-crm/`.

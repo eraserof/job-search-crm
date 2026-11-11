@@ -1,0 +1,8 @@
+{
+  "ask": "Implement ONLY ModelLister.list(Platform platform) in codegen/src/main/java/com/jobcrm/codegen/llm/ModelLister.java, following its javadoc steps exactly. Build the request with HttpRequest.newBuilder(URI.create(platform.base() + \"/models\")).timeout(Duration.ofSeconds(10)).GET(); add the Authorization header with platform.apiKey().ifPresent(k -> builder.header(\"Authorization\", \"Bearer \" + k)); send with http.send(request, HttpResponse.BodyHandlers.ofString()). Catch IOException e: throw LlmException.retryable(\"cannot reach \" + platform.base() + \": \" + e.getMessage(), e). Catch InterruptedException e: Thread.currentThread().interrupt(); throw LlmException.fatal(\"interrupted\", e). Status other than 200: throw LlmException.fatal(\"HTTP \" + response.statusCode() + \" from \" + platform.base() + \"/models\"). Parse with json.readTree(response.body()) inside the same try (readTree throws a JsonProcessingException, which is an IOException). Loop over root.path(\"data\") and add each non-blank path(\"id\").asText() to a new ArrayList<String>. Do not plan contains or any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/llm/ModelLister.java",
+    "codegen/src/main/java/com/jobcrm/codegen/config/Platform.java",
+    "codegen/src/main/java/com/jobcrm/codegen/llm/LlmException.java"
+  ]
+}

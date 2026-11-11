@@ -1,0 +1,20 @@
+# Local code-stage model for codegen (the "code" stage in codegen/models.json).
+# Pins context size and sampling so every run uses the same settings.
+# Change FROM to the exact tag you pulled (check with: ollama list).
+#
+#   ollama create coder-full-gpu-7b -f codegen\Modelfile
+#
+# If you change the name, update stages.code.model in codegen/models.json and the default in gen.cmd.
+FROM qwen2.5-coder:7b
+
+# Job prompts are ~0.5k-2k tokens and answers up to ~0.7k, so 8192 leaves plenty of headroom.
+# If `ollama ps` shows a CPU/GPU split, the model does not fit in VRAM; dropping this to 4096
+# shrinks the KV cache and may let it fit entirely on the GPU.
+PARAMETER num_ctx 8192
+
+# Ask for every layer on the GPU (Ollama still falls back to CPU if VRAM runs out).
+PARAMETER num_gpu 999
+
+# Low but non-zero: repeat runs stay comparable but flaky behaviour is still visible.
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9

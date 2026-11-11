@@ -1,0 +1,8 @@
+{
+  "ask": "Implement ONLY these four static methods in codegen/src/main/java/com/jobcrm/codegen/plan/PlanPrompts.java, following their javadoc exactly: contextBlock(Repo repo, List<String> paths) (use a StringBuilder; for each path append the header, repo.read(repo.resolve(path)), and \"\\n\"); extractJson(String raw) (THINK.matcher(raw).replaceAll(\"\"), then indexOf('{') and lastIndexOf('}'), return Optional.empty() when either is -1 or end < start, else Optional.of(text.substring(start, end + 1))); responseFormat(ObjectMapper json, JsonNode schema) (ObjectNode root = json.createObjectNode(); root.put(\"type\", \"json_schema\"); ObjectNode spec = root.putObject(\"json_schema\"); spec.put(\"name\", \"plan\"); spec.put(\"strict\", true); spec.set(\"schema\", schema); return root); codePrompt(String rules, PlanJob job) (StringBuilder with \"\\n\" line breaks in exactly the layout the javadoc shows; PlanJob is a record with id(), target(), signature(), classContext(), types(), List<String> behavior(), List<String> imports()). planner, retry, and rulesHeader are already implemented: do not plan them or any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/plan/PlanPrompts.java",
+    "codegen/src/main/java/com/jobcrm/codegen/plan/PlanJob.java",
+    "codegen/src/main/java/com/jobcrm/codegen/Repo.java"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "ask": "Implement ONLY the two stubs in codegen/src/main/java/com/jobcrm/codegen/metrics/StatsReport.java, in this order: formatRow, then report (report calls formatRow). Each stub's Javadoc is its complete contract. For each job: copy the signature exactly as it appears in the file (\"private static String formatRow(StageStats stats)\" and \"static String report(List<CallRecord> records)\"); put the class declaration line, the HEADER and ROW_FORMAT constants, and for the report job also the formatRow signature, in classContext; copy the contract's numbered steps into behavior in order, one entry per step, keeping every exception type, message, and code expression exactly as written; put the contract's Uses list into the types field. StageStats is a record in the same package with the static factory StageStats from(String stage, List<CallRecord> records) and the accessors String stage(), long calls(), long failures(), long promptTokensTotal(), double promptTokensAverage(), long completionTokensTotal(), double completionTokensAverage(), double totalTimeMillisAverage(), long totalTimeMillisMax(), double completionTokensPerSecond(). CallRecord has String stage(). Imports: none needed; the file already imports ArrayList, List, Locale, and TreeMap. Do not plan any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/metrics/StatsReport.java",
+    "codegen/src/main/java/com/jobcrm/codegen/metrics/StageStats.java"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "ask": "Implement ONLY ModelsConfig.load(Path file, ObjectMapper json) and ModelsConfig.resolve(String stageName) in codegen/src/main/java/com/jobcrm/codegen/config/ModelsConfig.java, following their javadoc. load: read with json.readValue(file.toFile(), ModelsConfig.class); wrap IOException (which includes Jackson parse errors) in new ConfigException(\"cannot read \" + file + \": \" + e.getMessage(), e); then return new ModelsConfig(platforms == null ? Map.of() : platforms, stages == null ? Map.of() : stages, escalation) built from the loaded record's accessors. resolve: look up stages().get(stageName) and platforms().get(stage.platform()); throw the two ConfigException messages from the javadoc; apply defaults (temperature 0.2, firstTokenTimeoutSec 900, idleTimeoutSec 120) to the nullable boxed fields; build Duration values with Duration.ofSeconds; return new ResolvedStage(stageName, stage.platform(), platform, stage.model(), temperature, firstTokenTimeout, idleTimeout). Do not plan hasStage, effectiveEscalation, or any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/config/ModelsConfig.java",
+    "codegen/src/main/java/com/jobcrm/codegen/config/StageSpec.java",
+    "codegen/src/main/java/com/jobcrm/codegen/config/Platform.java",
+    "codegen/src/main/java/com/jobcrm/codegen/config/ResolvedStage.java",
+    "codegen/src/main/java/com/jobcrm/codegen/config/ConfigException.java"
+  ]
+}

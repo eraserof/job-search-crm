@@ -1,0 +1,7 @@
+{
+  "ask": "Add a ContractCheck class to the Java tool, in a package under com.jobcrm.codegen (directory codegen/src/main/java/com/jobcrm/codegen). It has a method that pulls the literals out of a method's Javadoc contract, and a method that reports which of those literals are missing from a method body. Do not wire it into JobRunner or any command yet: list that wiring under MANUAL.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/metrics/MetricsLog.java",
+    "codegen/src/main/java/com/jobcrm/codegen/java/MethodLocator.java"
+  ]
+}

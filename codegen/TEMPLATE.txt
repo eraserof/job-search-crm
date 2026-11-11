@@ -1,0 +1,28 @@
+You are implementing a single Java method in an existing codebase.
+
+Rules:
+- Output ONLY the method implementation. No explanation, no markdown fences, no commentary.
+- Use only the types, fields, and methods shown below. Do not invent methods.
+- Read record components with accessor methods: `call.argsJson()`, NOT `call.argsJson`.
+- A list you will add to later must be mutable: `new ArrayList<>(...)`, not `List.of(...)`.
+- Acquire a lock/semaphore BEFORE the try whose finally releases it, so an acquire that fails
+  never reaches the release.
+- A lambda that returns a value is a Callable; one that returns nothing is a Runnable. Match the
+  method you are passing it to.
+- Match the existing code style (compact, package-private by default, no wildcard imports).
+- Do not write import statements; the IDE adds them.
+- Avoid using var, Use explicit types
+- If a required fact is missing, output exactly: NEEDS_CLARIFICATION: <your question>
+
+=== The class this method belongs to (relevant fields) ===
+<!-- paste the class declaration and the fields/helpers the method touches -->
+
+=== Types and methods you may use ===
+<!-- paste the signatures of every type the method references: records, enums, interfaces,
+     exceptions. Give accessor signatures for records, e.g. `record ToolCall(...) { String id(); }` -->
+
+=== Contract ===
+Implement:  <!-- the exact method signature, e.g. public AgentRunOutcome run(AgentRunId id, ...) -->
+
+Behavior:
+- <!-- numbered or bulleted steps; be explicit about ordering, guards, and what to return -->

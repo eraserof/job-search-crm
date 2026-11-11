@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "required": ["jobs"],
+  "properties": {
+    "jobs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "target", "signature", "classContext", "types", "behavior", "imports"],
+        "properties": {
+          "id": { "type": "string" },
+          "target": { "type": "string" },
+          "signature": { "type": "string" },
+          "classContext": { "type": "string" },
+          "types": { "type": "string" },
+          "behavior": { "type": "array", "items": { "type": "string" } },
+          "imports": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

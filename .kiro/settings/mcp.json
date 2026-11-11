@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "kirograph-codegen": {
+      "command": "kirograph",
+      "args": [
+        "serve",
+        "--mcp",
+        "--path",
+        "D:/Dev/Contacts App/codegen"
+      ]
+    },
+    "kirograph-jobcrm": {
+      "command": "kirograph",
+      "args": [
+        "serve",
+        "--mcp",
+        "--path",
+        "D:\\Dev\\Contacts App\\src"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "kirograph_search",
+        "kirograph_context",
+        "kirograph_node",
+        "kirograph_gain",
+        "kirograph_read",
+        "kirograph_retrieve",
+        "kirograph_budget"
+      ]
+    }
+  }
+}

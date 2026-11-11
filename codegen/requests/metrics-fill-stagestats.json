@@ -1,0 +1,7 @@
+{
+  "ask": "Implement ONLY the six stubs in codegen/src/main/java/com/jobcrm/codegen/metrics/StageStats.java, in this order: countFailures, sumPromptTokens, sumCompletionTokens, sumTotalMillis, maxTotalMillis, then from (from calls the other five, so it goes last). Each stub's Javadoc is its complete contract. For each job: copy the signature exactly as it appears in the file (for example \"private static long countFailures(List<CallRecord> records)\" and \"static StageStats from(String stage, List<CallRecord> records)\"); put the record declaration line in classContext, and for the from job also the five private helper signatures; copy the contract's numbered steps into behavior in order, one entry per step, keeping every exception type, message, and code expression exactly as written, including the (double) casts and the 1000.0D factor; put the contract's Uses list into the types field and add the CallRecord accessors it needs (CallRecord is a record in the same package: long promptTokens(), long completionTokens(), long totalMillis(), boolean success()). Imports: none needed beyond java.util.List, which the file already has. Do not plan any other method.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/metrics/StageStats.java",
+    "codegen/src/main/java/com/jobcrm/codegen/metrics/CallRecord.java"
+  ]
+}

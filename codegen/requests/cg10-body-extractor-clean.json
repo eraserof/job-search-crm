@@ -1,0 +1,6 @@
+{
+  "ask": "Implement ONLY BodyExtractor.clean(String raw) in codegen/src/main/java/com/jobcrm/codegen/java/BodyExtractor.java, following its javadoc: remove <think>...</think> blocks with Pattern.compile(\"<think>.*?</think>\", Pattern.DOTALL).matcher(raw).replaceAll(\"\"); then keep only the lines (from text.lines()) whose strip() does not start with three backticks (\"```\"); join them with \"\\n\" and return the result stripped. Do not plan extractBody, isClarification, or any other method. java.util.regex.Pattern and java.util.stream.Collectors are not imported yet: list them in imports if used.",
+  "context": [
+    "codegen/src/main/java/com/jobcrm/codegen/java/BodyExtractor.java"
+  ]
+}
