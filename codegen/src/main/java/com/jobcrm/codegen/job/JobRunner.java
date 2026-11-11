@@ -13,6 +13,7 @@ import com.jobcrm.codegen.llm.ChatClient;
 import com.jobcrm.codegen.llm.LlmException;
 import com.jobcrm.codegen.llm.Reasoning;
 import com.jobcrm.codegen.metrics.CallLabel;
+import com.jobcrm.codegen.review.ContractReview;
 import com.jobcrm.codegen.vcs.Vcs;
 import com.jobcrm.codegen.vcs.VcsException;
 import java.io.PrintWriter;
@@ -235,7 +236,7 @@ public final class JobRunner {
           repo.relative(promptFile), repo.relative(orig));
     }
 
-    String compiled = "compiled after " + n + " attempt(s): " + job.target();
+    String compiled = "compiled after " + n + " attempt(s): " + job.target() + review(job, id, log);
     if (!options.autoCommit()) {
       return new JobOutcome(JobOutcome.Status.COMPILED, n, log.dir(), compiled, null);
     }
@@ -265,6 +266,35 @@ public final class JobRunner {
           log.dir(),
           "compiled, but the commit failed (change left in place, uncommitted): " + e.getMessage(),
           null);
+    }
+  }
+
+  /**
+   * Bug catcher layer 1: checks the compiled method against the literals in its own Javadoc
+   * contract. Warns only. Anything it finds goes to {@code review.txt} in the run folder and to the
+   * console, and the commit proceeds regardless.
+   *
+   * @return text for the outcome message: empty, or {@code ", N review warning(s)"}
+   */
+  private String review(Job job, String id, RunLog log) {
+    try {
+      ContractReview.Result result =
+          ContractReview.check(repo.read(repo.resolve(job.target())), job.signature());
+      if (result.missing().isEmpty()) {
+        say(
+            result.checked() == 0
+                ? "review: the contract lists no literals to check"
+                : "review: all " + result.checked() + " contract literal(s) found in the body");
+        return "";
+      }
+      String report = ContractReview.report(id, result);
+      log.write("review.txt", report);
+      say("%s", report.stripTrailing());
+      say("review warnings only: the commit goes ahead. see %s/review.txt", log.display());
+      return ", " + result.missing().size() + " review warning(s)";
+    } catch (RuntimeException e) {
+      say("review skipped: %s", e.getMessage());
+      return "";
     }
   }
 

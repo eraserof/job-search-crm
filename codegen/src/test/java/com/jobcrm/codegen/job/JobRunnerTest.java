@@ -217,6 +217,55 @@ class JobRunnerTest {
     assertThat(label.current()).isNull();
   }
 
+  // ---------- bug catcher, layer 1: warns, never blocks ----------
+
+  private static final String WITH_CONTRACT =
+      """
+      class A {
+        /**
+         * Returns the answer.
+         *
+         * <pre>
+         * "forty-two"
+         * </pre>
+         */
+        int answer() {
+          throw new UnsupportedOperationException();
+        }
+      }
+      """;
+
+  @Test
+  void aMissingContractLiteralIsWrittenToReviewTxtButTheCommitStillHappens() throws Exception {
+    repo.write(root.resolve(TARGET), WITH_CONTRACT);
+    replies.add("return 42;");
+    compiles.add(true);
+
+    JobOutcome outcome = run(options(1, 0, true));
+
+    assertThat(outcome.status()).isEqualTo(JobOutcome.Status.COMPILED);
+    assertThat(outcome.message()).contains("1 review warning(s)");
+    assertThat(outcome.runDir().resolve("review.txt"))
+        .content()
+        .contains("review of A.answer")
+        .contains("WARN \"forty-two\"");
+    assertThat(vcs.commits).containsExactly("codegen: A.answer (1 attempt(s))");
+  }
+
+  @Test
+  void aBodyWithTheContractLiteralWritesNoReviewFile() throws Exception {
+    repo.write(root.resolve(TARGET), WITH_CONTRACT);
+    replies.add("String s = \"forty-two\";\nreturn 42;");
+    compiles.add(true);
+
+    JobOutcome outcome = run(options(1, 0, true));
+
+    assertThat(outcome.status()).isEqualTo(JobOutcome.Status.COMPILED);
+    assertThat(outcome.message()).doesNotContain("review");
+    assertThat(outcome.runDir().resolve("review.txt")).doesNotExist();
+    assertThat(vcs.commits).hasSize(1);
+  }
+
   // ---------- helpers ----------
 
   private JobOutcome run(JobOptions options) {

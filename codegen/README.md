@@ -104,6 +104,16 @@ the run folder. A failed job leaves no commit. A job refuses to start if the bra
 To drop one job, `git revert <sha>`. `--no-auto-commit` turns it off; `--no-compile` does too, since
 uncompiled code is never committed. Don't commit by hand while a run is active.
 
+## Review (bug catcher, layer 1)
+
+After a job compiles, the tool checks the new body against the contract in the method's own
+Javadoc: every line in the contract that is a quoted string (the `<pre>` block the scaffold writes)
+must appear in the body. Missing ones are printed and written to `review.txt` in the run folder,
+and the commit still happens. It makes no model call. HTML entities in the Javadoc (`&lt;`, `&gt;`,
+`&amp;`, `&#64;`) are decoded first. It only proves the text is present, not that it is used
+correctly, and it skips `--no-compile` runs. A method with no Javadoc, or no quoted lines, checks
+nothing and says so.
+
 ## Model calls
 
 - **Streaming with two timeouts.** `firstTokenTimeoutSec` covers queueing and model loading;

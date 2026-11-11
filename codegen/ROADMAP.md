@@ -25,10 +25,11 @@ section. Move an item to "Done" with a date when it lands.
   the Javadoc steps re-typed, at a cost of ~4 minutes and 14.6k tokens of the 27b. When the stubs
   came from a scaffold, jobs could be derived from the Javadoc without a model call. Same item as the
   scaffold to `run` hand-off above.
-- **Bug catcher, layer 1 (`ContractCheck`) is built but not wired in.** `ContractCheck.missing` is
-  done and tested. Still to do: get the Javadoc above a method (`MethodLocator` returns only body
-  ranges), call it from `JobRunner` after a successful compile, and write warnings to `review.txt` in
-  the run folder. Warn only, never block the commit.
+- **Bug catcher, next layers.** Layer 1 is live (see Done). Ideas for more, in order of cost:
+  exception types named in the contract (`throw new X`) must appear in the body; contract mentions
+  null input but the body never mentions `null`; then an optional `review` stage on the 27b that
+  must quote the contract line behind every finding. Layer 1 only proves a string is present, not
+  that it is used correctly (a literal in a comment passes).
 - **Task 15's nine remaining tools** (main app; the first four read tools are on
   `feature/task-15-read-tools`).
 - **VectorGraph**, when we get to it.
@@ -88,6 +89,10 @@ Two branches share the first codegen commit (`c5e533f`) and can be merged in eit
 
 ## Done
 
+- 2026-11-11: bug catcher layer 1 wired in. After a job compiles, `JobRunner` reads the Javadoc above
+  the method (`MethodLocator.javadoc`), checks every quoted literal in the contract against the new
+  body (`ContractReview`, built on `ContractCheck`), and writes any misses to `review.txt` in the run
+  folder. Warn only: the commit always goes ahead. No model call.
 - 2026-11-10: metrics record a job label. Code and repair calls use the commit id (`Class.method`,
   e.g. `ContractCheck.literals`, falling back to the job file name); plan and scaffold calls use the
   request name. A shared `CallLabel` is set by `JobRunner` and the plan and scaffold commands, and

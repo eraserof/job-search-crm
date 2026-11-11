@@ -8,6 +8,7 @@ import com.github.javaparser.Range;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +47,19 @@ public final class MethodLocator {
       return Optional.empty();
     }
     return toRange(source, matches.get(0));
+  }
+
+  /**
+   * The raw Javadoc text above the one method matching {@code signature}, without the comment
+   * delimiters and with each line's leading asterisk still in place. Empty if there is no such
+   * method, more than one, no Javadoc, or {@code source} does not parse.
+   */
+  public static Optional<String> javadoc(String source, String signature) {
+    List<MethodDeclaration> matches = matches(source, signature);
+    if (matches == null || matches.size() != 1) {
+      return Optional.empty();
+    }
+    return matches.get(0).getJavadocComment().map(JavadocComment::getContent);
   }
 
   /**
